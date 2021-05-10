@@ -1,0 +1,44 @@
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\bin\Debug\client.exe.config
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\bin\Debug\client.exe
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\bin\Debug\client.pdb
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\obj\Debug\client.Form1.resources
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\obj\Debug\client.Properties.Resources.resources
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\obj\Debug\client.csproj.GenerateResource.Cache
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\obj\Debug\client.exe
+c:\users\ömer ekiz\documents\visual studio 2015\Projects\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Visual Studio 2015\Projects\cs432_project\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Documents\Visual Studio 2015\Projects\cs432_project\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Documents\Visual Studio 2015\Projects\cs432_project\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\bin\Debug\client.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\bin\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\obj\Debug\client.Form1.resources
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\cs432_project\client\client\obj\Debug\client.csproj.GenerateResource.Cache
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\bin\Debug\client.exe.config
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\bin\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\bin\Debug\client.pdb
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.csprojAssemblyReference.cache
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.Form1.resources
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.csproj.GenerateResource.cache
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\cs432_project\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\nonce_hatasi\cs432_project\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\nonce_hatasi\cs432_project\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\Ders Slaytları 3.2\CS 432\nonce_hatasi\cs432_project\client\client\obj\Debug\client.pdb
+\\Mac\Home\Desktop\cs432_project\client\client\bin\Debug\client.exe.config
+\\Mac\Home\Desktop\cs432_project\client\client\bin\Debug\client.exe
+\\Mac\Home\Desktop\cs432_project\client\client\bin\Debug\client.pdb
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.csprojAssemblyReference.cache
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.Form1.resources
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.Properties.Resources.resources
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.csproj.GenerateResource.cache
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.exe
+\\Mac\Home\Desktop\cs432_project\client\client\obj\Debug\client.pdb
