@@ -22,6 +22,7 @@ namespace client
         Socket clientSocket;
         string repository;
         byte[] sessionKey;
+        string serverPubKey;
 
         public Form1()
         {
@@ -62,7 +63,6 @@ namespace client
             logs.AppendText(generateHexStringFromByteArray(sha384) + "\n" + "sha384.size: " + sha384.Length + "\n");
 
             byte[] encryptkey = new byte[32];
-
             byte[] myIV = new byte[16];
 
             Array.Copy(sha384, 0, encryptkey, 0, 32);
@@ -91,42 +91,38 @@ namespace client
 
         private void Connection()
         {
-
-            //Send Name
-            Byte[] nameBuffer = new Byte[64];
-            nameBuffer = Encoding.Default.GetBytes(textBox_username.Text);
-            clientSocket.Send(nameBuffer);
-
-            //Wait for Response
-            bool responded = false;
-            //bool response = false;
-            while (!responded)
+            try
             {
+                //Send Name
+                Byte[] nameBuffer = new Byte[64];
+                nameBuffer = Encoding.Default.GetBytes(textBox_username.Text);
+                clientSocket.Send(nameBuffer);
+
+                //Wait for Response
                 Byte[] buffer = new Byte[64];
                 clientSocket.Receive(buffer);
 
-                string incomingMessage = Encoding.Default.GetString(buffer);
-                incomingMessage = incomingMessage.Substring(0, incomingMessage.IndexOf("\0"));
+                string usernameValidity = Encoding.Default.GetString(buffer);
+                usernameValidity = usernameValidity.Substring(0, usernameValidity.IndexOf("\0"));
 
-                if (incomingMessage == "Valid Username")
+                if (usernameValidity == "Valid Username")
                 {
-                    responded = true;
                     //Authentication();
-                    //response = true;
                     textBox_pass.Enabled = true;
-                    authenticate_button.Enabled = true;
-
+                    button_authenticate.Enabled = true;
                 }
-                else if (incomingMessage == "Invalid Username")
+                else if (usernameValidity == "Invalid Username")
                 {
-                    logs.AppendText("Invalid Username\n");
-                    logs.AppendText("Disconnected\n");
+                    logs.AppendText("Invalid Username, disconnecting...\n");
+                    button_disconnect.Enabled = false;
+                    button_connect.Enabled = true;
                     clientSocket.Close();
-                    responded = true;
-                    //response = false;
                 }
             }
-
+            catch
+            {
+                logs.AppendText("Server has disconnected during connection phase");
+            }
         }
 
         void Authentication()
@@ -139,10 +135,7 @@ namespace client
                 logs.AppendText("Nonce has been received from the server\n");
                 logs.AppendText(generateHexStringFromByteArray(nonce) + "\n" + "Nonce size: " + nonce.Length + "\n");
 
-
                 string nonce_string = Encoding.Default.GetString(nonce);
-                //nonce_string = nonce_string.Substring(0, nonce_string.IndexOf("\0"));
-
 
                 //signing the nonce
                 string privateKey_string = Encoding.Default.GetString(privateKey);
@@ -153,20 +146,8 @@ namespace client
                 logs.AppendText("Signature over nonce has been sent to server\n");
                 logs.AppendText(generateHexStringFromByteArray(signed_nonce) + "\n" + "Signed Nonce size: " + signed_nonce.Length + "\n");
 
-                //receiving encrypted hmac + ack message
-                byte[] hmac = new byte[519];
-                clientSocket.Receive(hmac);
-                logs.AppendText("Received encr(hmac_key) + ack\n");
-                logs.AppendText(generateHexStringFromByteArray(hmac) + "\n" + "Hmac + ack size: " + hmac.Length + "\n");
-
-                //receiving signature of the server over (encrypted hmac + ack message)
-                byte[] signed_hmac = new byte[512];
-                clientSocket.Receive(signed_hmac);
-                logs.AppendText("Received signature(encr(hmac_key) + ack)\n");
-                logs.AppendText(generateHexStringFromByteArray(signed_hmac) + "\n" + "Signature over (Hmac + ack) size: " + signed_hmac.Length + "\n");
-
                 //getting the public key of the server
-                string serverPubKey;
+                
                 using (System.IO.StreamReader fileReader =
                 new System.IO.StreamReader(repository + "\\server_pub.txt"))
                 {
@@ -176,39 +157,66 @@ namespace client
                 logs.AppendText("Server's public key:\n");
                 logs.AppendText(generateHexStringFromByteArray(serverPubKey_byte) + "\n" + "Server Public key size: " + serverPubKey_byte.Length + "\n");
 
-                string hmac_string = Encoding.Default.GetString(hmac);
-                hmac_string = hmac_string.Substring(0, hmac_string.IndexOf("\0"));
+                //receiving response from server
+                byte[] response = new byte[519];
+                clientSocket.Receive(response);
+                string response_string = Encoding.Default.GetString(response);
+                //string not_trimmed_response = response_string;
+                response_string = response_string.Substring(0, response_string.IndexOf("\0"));
 
-                if (hmac_string == "NEG_ACK")
+                //receiving signed response from server
+                byte[] signed_response = new byte[512];
+                clientSocket.Receive(signed_response);
+
+                string ack = response_string.Substring(0, 7);
+
+                if (ack == "NEG_ACK") //server sent negative acknowledgement
                 {
                     logs.AppendText("Negative ack has been received\n");
-                    if (verifyWithRSA(hmac_string, 4096, serverPubKey, signed_hmac))
+                    if (verifyWithRSA(response_string, 4096, serverPubKey, signed_response))
                     {
                         logs.AppendText("Signature of the negative ack message is verified\n");
                         clientSocket.Close();
+                        button_fileExplorer.Enabled = true;
+                        button_disconnect.Enabled = false;
+                        button_authenticate.Enabled = false;
+                        textBox_pass.Enabled = false;
                     }
                     else
                     {
                         logs.AppendText("Signature of the negative ack message could not be verified!\n");
                         clientSocket.Close();
+                        button_fileExplorer.Enabled = true;
+                        button_disconnect.Enabled = false;
+                        button_authenticate.Enabled = false;
+                        textBox_pass.Enabled = false;
                     }
                 }
-                else
+                else if (ack == "POS_ACK") //server sent positive acknowledgement
                 {
                     logs.AppendText("Positive ack has been received\n");
-                    if (verifyWithRSA(hmac_string, 4096, serverPubKey, signed_hmac))
+                    logs.AppendText("Received encr(hmac_key) + ack\n");
+                    logs.AppendText(generateHexStringFromByteArray(response) + "\n" + "Hmac + ack size: " + response.Length + "\n");
+
+                    logs.AppendText("Received signature(encr(hmac_key) + ack)\n");
+                    logs.AppendText(generateHexStringFromByteArray(signed_response) + "\n" + "Signature over (Hmac + ack) size: " + signed_response.Length + "\n");
+
+                    byte[] encrypted_hmac_byte = new byte[512];
+                    Array.Copy(response, 7, encrypted_hmac_byte, 0, 512);
+                    string encrypted_hmac_string = Encoding.Default.GetString(encrypted_hmac_byte);
+
+                    logs.AppendText("Encrypted hmac:\n" + generateHexStringFromByteArray(encrypted_hmac_byte) + "\n");
+                    if (verifyWithRSA(response_string, 4096, serverPubKey, signed_response))
                     {
                         logs.AppendText("Signature of the server has been verified\n");
                         logs.AppendText("Server has authanticated itself!\n");
-                        string encrypted_hmac = hmac_string.Substring(0, hmac_string.IndexOf("POS_ACK"));
 
-                        sessionKey = decryptWithRSA(encrypted_hmac, 4096, privateKey_string);
-                        logs.AppendText("Session Key:\n");
-                        logs.AppendText(generateHexStringFromByteArray(sessionKey) + "\n" + "Session key size: " + sessionKey.Length + "\n");
+                        sessionKey = decryptWithRSA(encrypted_hmac_string, 4096, privateKey_string);
+                        logs.AppendText("Session key: " + generateHexStringFromByteArray(sessionKey) + "\n" + "Session key size: " + sessionKey.Length + "\n");
 
                         logs.AppendText("Protocol has been completed and you are authanticated to the server!\n");
-                        button_disconnect.Enabled = true;
-                        button_connect.Enabled = false;
+                        button_authenticate.Enabled = false;
+                        textBox_pass.Enabled = false;
                         Receive();
                     }
                     else
@@ -216,18 +224,41 @@ namespace client
                         logs.AppendText("Could not verify the signature of the hmac + ack message\n");
                         logs.AppendText("Check your private key file, password or username and try again!\n");
                         clientSocket.Close();
+                        button_fileExplorer.Enabled = true;
+                        button_disconnect.Enabled = false;
+                        button_authenticate.Enabled = false;
+                        textBox_pass.Enabled = false;
                     }
                 }
-
+                else
+                {
+                    logs.AppendText("No ack was found in the message\n");
+                    clientSocket.Close();
+                    button_fileExplorer.Enabled = true;
+                    button_connect.Enabled = true;
+                    button_disconnect.Enabled = false;
+                    button_authenticate.Enabled = false;
+                    textBox_pass.Enabled = false;
+                }
             }
             catch
             {
                 logs.AppendText("An Error Occured During Challenge-Response Protocol!\n");
                 logs.AppendText("Check your private key file, password or username and try again!\n");
-                logs.AppendText("Disconnect!\n");
-                //
-                clientSocket.Close();
-                
+                logs.AppendText("Disconnecting...\n");
+                try
+                {
+                    clientSocket.Close();
+                }
+                catch
+                {
+                    logs.AppendText("Server has already disconnected\n");
+                }
+                button_fileExplorer.Enabled = true;
+                button_connect.Enabled = true;
+                button_disconnect.Enabled = false;
+                button_authenticate.Enabled = false;
+                textBox_pass.Enabled = false;
             }
         }
 
@@ -306,7 +337,8 @@ namespace client
             terminating = true;
 
             button_disconnect.Enabled = false;
-            button_connect.Enabled = false;
+            button_authenticate.Enabled = false;
+            textBox_pass.Enabled = false;
             textBox_ip.Enabled = true;
             textBox_port.Enabled = true;
             textBox_username.Enabled = true;
@@ -342,7 +374,6 @@ namespace client
                 textBox_ip.Enabled = true;
                 textBox_port.Enabled = true;
                 textBox_username.Enabled = true;
-                textBox_pass.Enabled = true;
 
                 button_folderExplorer.Enabled = false;
                 button_connect.Enabled = true;
@@ -610,25 +641,71 @@ namespace client
                     //Send file name file size to the server 
                     int fileProperties = 256; // FileName + The Data's Length
                     int fileNameLength = 128; // FileName
-                    string fileLength = File.ReadAllBytes(dialog.FileName).Length.ToString(); // The Data's Length is turned into string 
+                    string fileLength = s_encryptedWithAES256.Length.ToString(); // The Data's Length is turned into string 
                                                                                               // to put into a Byte Array with the FileName
                     Byte[] filePropertiesBuffer = new Byte[fileProperties]; // Allocate space for FileName and The Data's Length
                     // Copy the FileName and The Data's Length into the filePropertiesBuffer
                     Array.Copy(Encoding.Default.GetBytes(dialog.SafeFileName), filePropertiesBuffer, dialog.SafeFileName.Length);
-                    Array.Copy(Encoding.ASCII.GetBytes(fileLength), 0, filePropertiesBuffer, fileNameLength, fileLength.Length);
+                    Array.Copy(Encoding.Default.GetBytes(fileLength), 0, filePropertiesBuffer, fileNameLength, fileLength.Length);
                     // Send the filePropertiesBuffer to the Server
                     clientSocket.Send(filePropertiesBuffer);
 
 
 
                     // Encrypted file and HMAC value and sent to server
-                    //string message = s_hmac_value + s_encryptedWithAES256;
-                    byte[] hmac = Encoding.Default.GetBytes(s_hmac_value);
                     byte[] enc_file = Encoding.Default.GetBytes(s_encryptedWithAES256);
                     clientSocket.Send(enc_file);
-                    clientSocket.Send(hmac);
+                    clientSocket.Send(hmac_value);
 
-                    //Recieve acknowledgement 
+                    //Recieve acknowledgement
+                    Byte[] bufferAck = new Byte[64];
+                    clientSocket.Receive(bufferAck);
+                    string sAcknowledgement = Encoding.Default.GetString(bufferAck).Trim('\0');
+                    logs.AppendText("Recieved ack is :");
+                    logs.AppendText(generateHexStringFromByteArray(bufferAck) + "\n");
+                    logs.AppendText(sAcknowledgement + "\n");
+
+                    //Recieve signed acknowledgement 
+                    Byte[] bufferAckSigned = new Byte[512];
+                    clientSocket.Receive(bufferAckSigned);
+                    logs.AppendText("Recieved signed ack is :");
+                    logs.AppendText(generateHexStringFromByteArray(bufferAckSigned) + "\n");
+
+
+
+                    //Verify the signature
+                    if (verifyWithRSA(sAcknowledgement, 4096, serverPubKey, bufferAckSigned))
+                    {
+                        logs.AppendText("Signature of the ack message is verified\n");
+
+                        if(sAcknowledgement == "neg_ack")
+                        {
+                            logs.AppendText("Rturned ack equals to ");
+                            logs.AppendText(sAcknowledgement + "\n");
+                            logs.AppendText("File sent could not uploaded since HMAC is not verified");
+
+
+                        }
+                        else
+                        {
+                            //returns the file name to the client 
+                            string formatted_filename = sAcknowledgement;
+                            logs.AppendText("Formatted filename equals to ");
+                            logs.AppendText(sAcknowledgement + "\n" );
+
+                            //Store the file name, AES key, IV and formatted filename safely
+
+
+                        }
+                      
+                    }
+                    else
+                    {
+                        logs.AppendText("Signature of the ack message could not be verified!\n");
+
+
+                    }
+
 
 
                 }
@@ -652,7 +729,6 @@ namespace client
                 if (privateKey == null)
                 {
                     logs.AppendText("Problem with the password or private key\n");
-
                 }
                 else
                 {

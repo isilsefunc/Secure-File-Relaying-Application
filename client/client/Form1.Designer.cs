@@ -48,83 +48,75 @@
             this.upload_button = new System.Windows.Forms.Button();
             this.download_button = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
-            this.authenticate_button = new System.Windows.Forms.Button();
+            this.button_authenticate = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox_ip
             // 
             this.textBox_ip.Enabled = false;
-            this.textBox_ip.Location = new System.Drawing.Point(244, 84);
-            this.textBox_ip.Margin = new System.Windows.Forms.Padding(6);
+            this.textBox_ip.Location = new System.Drawing.Point(122, 44);
             this.textBox_ip.Name = "textBox_ip";
-            this.textBox_ip.Size = new System.Drawing.Size(278, 31);
+            this.textBox_ip.Size = new System.Drawing.Size(141, 20);
             this.textBox_ip.TabIndex = 0;
             // 
             // textBox_port
             // 
             this.textBox_port.Enabled = false;
-            this.textBox_port.Location = new System.Drawing.Point(244, 156);
-            this.textBox_port.Margin = new System.Windows.Forms.Padding(6);
+            this.textBox_port.Location = new System.Drawing.Point(122, 81);
             this.textBox_port.Name = "textBox_port";
-            this.textBox_port.Size = new System.Drawing.Size(278, 31);
+            this.textBox_port.Size = new System.Drawing.Size(141, 20);
             this.textBox_port.TabIndex = 1;
             // 
             // textBox_username
             // 
             this.textBox_username.Enabled = false;
-            this.textBox_username.Location = new System.Drawing.Point(244, 233);
-            this.textBox_username.Margin = new System.Windows.Forms.Padding(6);
+            this.textBox_username.Location = new System.Drawing.Point(122, 121);
             this.textBox_username.Name = "textBox_username";
-            this.textBox_username.Size = new System.Drawing.Size(278, 31);
+            this.textBox_username.Size = new System.Drawing.Size(141, 20);
             this.textBox_username.TabIndex = 2;
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(40, 91);
-            this.label1.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label1.Location = new System.Drawing.Point(20, 47);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(37, 25);
+            this.label1.Size = new System.Drawing.Size(20, 13);
             this.label1.TabIndex = 3;
             this.label1.Text = "IP:";
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(40, 161);
-            this.label2.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label2.Location = new System.Drawing.Point(20, 84);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(57, 25);
+            this.label2.Size = new System.Drawing.Size(29, 13);
             this.label2.TabIndex = 4;
             this.label2.Text = "Port:";
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(40, 239);
-            this.label3.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label3.Location = new System.Drawing.Point(20, 124);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(116, 25);
+            this.label3.Size = new System.Drawing.Size(58, 13);
             this.label3.TabIndex = 5;
             this.label3.Text = "Username:";
             // 
             // logs
             // 
-            this.logs.Location = new System.Drawing.Point(640, 84);
-            this.logs.Margin = new System.Windows.Forms.Padding(6);
+            this.logs.Location = new System.Drawing.Point(320, 44);
             this.logs.Name = "logs";
             this.logs.ReadOnly = true;
-            this.logs.Size = new System.Drawing.Size(772, 531);
+            this.logs.Size = new System.Drawing.Size(388, 278);
             this.logs.TabIndex = 6;
             this.logs.Text = "";
             // 
             // button_connect
             // 
             this.button_connect.Enabled = false;
-            this.button_connect.Location = new System.Drawing.Point(244, 287);
-            this.button_connect.Margin = new System.Windows.Forms.Padding(6);
+            this.button_connect.Location = new System.Drawing.Point(122, 149);
             this.button_connect.Name = "button_connect";
-            this.button_connect.Size = new System.Drawing.Size(278, 44);
+            this.button_connect.Size = new System.Drawing.Size(139, 23);
             this.button_connect.TabIndex = 7;
             this.button_connect.Text = "Connect";
             this.button_connect.UseVisualStyleBackColor = true;
@@ -133,10 +125,9 @@
             // button_disconnect
             // 
             this.button_disconnect.Enabled = false;
-            this.button_disconnect.Location = new System.Drawing.Point(244, 343);
-            this.button_disconnect.Margin = new System.Windows.Forms.Padding(6);
+            this.button_disconnect.Location = new System.Drawing.Point(122, 178);
             this.button_disconnect.Name = "button_disconnect";
-            this.button_disconnect.Size = new System.Drawing.Size(274, 44);
+            this.button_disconnect.Size = new System.Drawing.Size(137, 23);
             this.button_disconnect.TabIndex = 8;
             this.button_disconnect.Text = "Disconnect";
             this.button_disconnect.UseVisualStyleBackColor = true;
@@ -145,28 +136,25 @@
             // textBox_pass
             // 
             this.textBox_pass.Enabled = false;
-            this.textBox_pass.Location = new System.Drawing.Point(244, 471);
-            this.textBox_pass.Margin = new System.Windows.Forms.Padding(6);
+            this.textBox_pass.Location = new System.Drawing.Point(122, 245);
             this.textBox_pass.Name = "textBox_pass";
-            this.textBox_pass.Size = new System.Drawing.Size(278, 31);
+            this.textBox_pass.Size = new System.Drawing.Size(141, 20);
             this.textBox_pass.TabIndex = 9;
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(40, 477);
-            this.label4.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label4.Location = new System.Drawing.Point(20, 248);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(112, 25);
+            this.label4.Size = new System.Drawing.Size(56, 13);
             this.label4.TabIndex = 10;
             this.label4.Text = "Password:";
             // 
             // button_fileExplorer
             // 
-            this.button_fileExplorer.Location = new System.Drawing.Point(244, 667);
-            this.button_fileExplorer.Margin = new System.Windows.Forms.Padding(6);
+            this.button_fileExplorer.Location = new System.Drawing.Point(122, 347);
             this.button_fileExplorer.Name = "button_fileExplorer";
-            this.button_fileExplorer.Size = new System.Drawing.Size(278, 44);
+            this.button_fileExplorer.Size = new System.Drawing.Size(139, 23);
             this.button_fileExplorer.TabIndex = 14;
             this.button_fileExplorer.Text = "File Explorer";
             this.button_fileExplorer.UseVisualStyleBackColor = true;
@@ -175,29 +163,26 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(36, 624);
-            this.label5.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label5.Location = new System.Drawing.Point(18, 324);
             this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(143, 25);
+            this.label5.Size = new System.Drawing.Size(72, 13);
             this.label5.TabIndex = 13;
             this.label5.Text = "Key Location:";
             // 
             // textBox_key
             // 
             this.textBox_key.Enabled = false;
-            this.textBox_key.Location = new System.Drawing.Point(244, 617);
-            this.textBox_key.Margin = new System.Windows.Forms.Padding(6);
+            this.textBox_key.Location = new System.Drawing.Point(122, 321);
             this.textBox_key.Name = "textBox_key";
-            this.textBox_key.Size = new System.Drawing.Size(274, 31);
+            this.textBox_key.Size = new System.Drawing.Size(139, 20);
             this.textBox_key.TabIndex = 12;
             // 
             // button_folderExplorer
             // 
             this.button_folderExplorer.Enabled = false;
-            this.button_folderExplorer.Location = new System.Drawing.Point(244, 822);
-            this.button_folderExplorer.Margin = new System.Windows.Forms.Padding(6);
+            this.button_folderExplorer.Location = new System.Drawing.Point(122, 427);
             this.button_folderExplorer.Name = "button_folderExplorer";
-            this.button_folderExplorer.Size = new System.Drawing.Size(278, 44);
+            this.button_folderExplorer.Size = new System.Drawing.Size(139, 23);
             this.button_folderExplorer.TabIndex = 17;
             this.button_folderExplorer.Text = "Folder Explorer";
             this.button_folderExplorer.UseVisualStyleBackColor = true;
@@ -206,27 +191,26 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(40, 778);
-            this.label6.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.label6.Location = new System.Drawing.Point(20, 405);
             this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(121, 25);
+            this.label6.Size = new System.Drawing.Size(60, 13);
             this.label6.TabIndex = 16;
             this.label6.Text = "Repository:";
             // 
             // textBox_repository
             // 
             this.textBox_repository.Enabled = false;
-            this.textBox_repository.Location = new System.Drawing.Point(244, 772);
-            this.textBox_repository.Margin = new System.Windows.Forms.Padding(6);
+            this.textBox_repository.Location = new System.Drawing.Point(122, 401);
             this.textBox_repository.Name = "textBox_repository";
-            this.textBox_repository.Size = new System.Drawing.Size(278, 31);
+            this.textBox_repository.Size = new System.Drawing.Size(141, 20);
             this.textBox_repository.TabIndex = 15;
             // 
             // upload_button
             // 
-            this.upload_button.Location = new System.Drawing.Point(640, 914);
+            this.upload_button.Location = new System.Drawing.Point(320, 475);
+            this.upload_button.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.upload_button.Name = "upload_button";
-            this.upload_button.Size = new System.Drawing.Size(271, 44);
+            this.upload_button.Size = new System.Drawing.Size(136, 23);
             this.upload_button.TabIndex = 18;
             this.upload_button.Text = "Upload";
             this.upload_button.UseVisualStyleBackColor = true;
@@ -234,37 +218,40 @@
             // 
             // download_button
             // 
-            this.download_button.Location = new System.Drawing.Point(977, 914);
+            this.download_button.Location = new System.Drawing.Point(488, 475);
+            this.download_button.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.download_button.Name = "download_button";
-            this.download_button.Size = new System.Drawing.Size(263, 43);
+            this.download_button.Size = new System.Drawing.Size(132, 22);
             this.download_button.TabIndex = 19;
             this.download_button.Text = "Download Request";
             this.download_button.UseVisualStyleBackColor = true;
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(977, 858);
+            this.textBox1.Location = new System.Drawing.Point(488, 446);
+            this.textBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(263, 31);
+            this.textBox1.Size = new System.Drawing.Size(134, 20);
             this.textBox1.TabIndex = 20;
             // 
-            // authenticate_button
+            // button_authenticate
             // 
-            this.authenticate_button.Enabled = false;
-            this.authenticate_button.Location = new System.Drawing.Point(244, 523);
-            this.authenticate_button.Name = "authenticate_button";
-            this.authenticate_button.Size = new System.Drawing.Size(278, 44);
-            this.authenticate_button.TabIndex = 21;
-            this.authenticate_button.Text = "Authenticate";
-            this.authenticate_button.UseVisualStyleBackColor = true;
-            this.authenticate_button.Click += new System.EventHandler(this.authenticate_button_Click);
+            this.button_authenticate.Enabled = false;
+            this.button_authenticate.Location = new System.Drawing.Point(122, 272);
+            this.button_authenticate.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button_authenticate.Name = "button_authenticate";
+            this.button_authenticate.Size = new System.Drawing.Size(139, 23);
+            this.button_authenticate.TabIndex = 21;
+            this.button_authenticate.Text = "Authenticate";
+            this.button_authenticate.UseVisualStyleBackColor = true;
+            this.button_authenticate.Click += new System.EventHandler(this.authenticate_button_Click);
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1472, 1072);
-            this.Controls.Add(this.authenticate_button);
+            this.ClientSize = new System.Drawing.Size(736, 552);
+            this.Controls.Add(this.button_authenticate);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.download_button);
             this.Controls.Add(this.upload_button);
@@ -285,7 +272,6 @@
             this.Controls.Add(this.textBox_username);
             this.Controls.Add(this.textBox_port);
             this.Controls.Add(this.textBox_ip);
-            this.Margin = new System.Windows.Forms.Padding(6);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
@@ -315,7 +301,7 @@
         private System.Windows.Forms.Button upload_button;
         private System.Windows.Forms.Button download_button;
         private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Button authenticate_button;
+        private System.Windows.Forms.Button button_authenticate;
     }
 }
 
