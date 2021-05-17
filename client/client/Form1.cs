@@ -23,6 +23,7 @@ namespace client
         string repository;
         byte[] sessionKey;
         string serverPubKey;
+        string LOGS_Path;
 
         public Form1()
         {
@@ -129,6 +130,7 @@ namespace client
         {
             try
             {
+                clientSocket.Send(Encoding.Default.GetBytes("OK"));
                 //receiving nonce from the server
                 byte[] nonce = new byte[16];
                 clientSocket.Receive(nonce);
@@ -214,13 +216,18 @@ namespace client
                         sessionKey = decryptWithRSA(encrypted_hmac_string, 4096, privateKey_string);
                         logs.AppendText("Session key: " + generateHexStringFromByteArray(sessionKey) + "\n" + "Session key size: " + sessionKey.Length + "\n");
 
+                        
+                        clientSocket.Send(Encoding.Default.GetBytes("OKBRUH"));
                         logs.AppendText("Protocol has been completed and you are authanticated to the server!\n");
                         button_authenticate.Enabled = false;
                         textBox_pass.Enabled = false;
-                        Receive();
+                        upload_button.Enabled = true;
+                        download_button.Enabled = true;
+                        textBox1.Enabled = true;
                     }
                     else
                     {
+                        clientSocket.Send(Encoding.Default.GetBytes("NOBRUH"));
                         logs.AppendText("Could not verify the signature of the hmac + ack message\n");
                         logs.AppendText("Check your private key file, password or username and try again!\n");
                         clientSocket.Close();
@@ -263,29 +270,6 @@ namespace client
         }
 
 
-        private void Receive()
-        {
-            while (connected)
-            {
-                string request_string;
-                try
-                {
-                    Byte[] request_buffer = new Byte[4];
-                    clientSocket.Receive(request_buffer);
-                    request_string = Encoding.Default.GetString(request_buffer);
-                    request_string = request_string.Substring(0, request_string.IndexOf("\0"));
-                }
-                catch
-                {
-                    if (!terminating)
-                    {
-                        logs.AppendText("The server has disconnected\n");
-                    }
-                    clientSocket.Close();
-                    connected = false;
-                }
-            }
-        }
 
         private void button_connect_Click(object sender, EventArgs e)
         {
@@ -377,6 +361,11 @@ namespace client
 
                 button_folderExplorer.Enabled = false;
                 button_connect.Enabled = true;
+
+                string lgp = repository.Substring(0, repository.LastIndexOf('\\')) + "\\LOGS.txt";
+                StreamWriter w = File.AppendText(lgp); // "CREATE IF LOGS TXT DOES NOT EXIST
+                w.Close();
+                LOGS_Path = lgp.Replace(@"\", "/");
             }
         }
 
@@ -633,7 +622,7 @@ namespace client
 
                     // Client generates the HMAC value of the encrypted file
                     byte[] hmac_value = applyHMACwithSHA256(s_encryptedWithAES256, sessionKey);
-                    logs.AppendText("HMAC Value of the Encrypted File:");
+                    logs.AppendText("HMAC Value of the Encrypted File: ");
                     logs.AppendText(generateHexStringFromByteArray(hmac_value) + "\n");
                     string s_hmac_value = Encoding.Default.GetString(hmac_value);
 
@@ -645,6 +634,7 @@ namespace client
                                                                                               // to put into a Byte Array with the FileName
                     Byte[] filePropertiesBuffer = new Byte[fileProperties]; // Allocate space for FileName and The Data's Length
                     // Copy the FileName and The Data's Length into the filePropertiesBuffer
+                    string original_filename = dialog.SafeFileName;
                     Array.Copy(Encoding.Default.GetBytes(dialog.SafeFileName), filePropertiesBuffer, dialog.SafeFileName.Length);
                     Array.Copy(Encoding.Default.GetBytes(fileLength), 0, filePropertiesBuffer, fileNameLength, fileLength.Length);
                     // Send the filePropertiesBuffer to the Server
@@ -661,14 +651,14 @@ namespace client
                     Byte[] bufferAck = new Byte[64];
                     clientSocket.Receive(bufferAck);
                     string sAcknowledgement = Encoding.Default.GetString(bufferAck).Trim('\0');
-                    logs.AppendText("Recieved ack is :");
+                    logs.AppendText("Recieved ack is : ");
                     logs.AppendText(generateHexStringFromByteArray(bufferAck) + "\n");
                     logs.AppendText(sAcknowledgement + "\n");
 
                     //Recieve signed acknowledgement 
                     Byte[] bufferAckSigned = new Byte[512];
                     clientSocket.Receive(bufferAckSigned);
-                    logs.AppendText("Recieved signed ack is :");
+                    logs.AppendText("Recieved signed ack is : ");
                     logs.AppendText(generateHexStringFromByteArray(bufferAckSigned) + "\n");
 
 
@@ -680,7 +670,7 @@ namespace client
 
                         if(sAcknowledgement == "neg_ack")
                         {
-                            logs.AppendText("Rturned ack equals to ");
+                            logs.AppendText("Returned ack equals to ");
                             logs.AppendText(sAcknowledgement + "\n");
                             logs.AppendText("File sent could not uploaded since HMAC is not verified");
 
@@ -695,18 +685,25 @@ namespace client
 
                             //Store the file name, AES key, IV and formatted filename safely
 
+                            // Write into LOGS.txt                          
+                            BinaryWriter bWriteLog = new BinaryWriter(File.Open(LOGS_Path, FileMode.Append));
+                            string AESkey_string = Encoding.Default.GetString(AESkey);
+                            string IV_string = Encoding.Default.GetString(IV);
+                            string privateKey_string = Encoding.Default.GetString(privateKey);
+                            byte[] encrypted_AES = encryptWithRSA(AESkey_string, 4096, privateKey_string);
+                            byte[] encrypted_IV = encryptWithRSA(IV_string, 4096, privateKey_string);
+                            Byte[] logBuffer = Encoding.Default.GetBytes(original_filename + "\t" + formatted_filename + "\t"
+                                + generateHexStringFromByteArray(encrypted_AES) + "\t" + generateHexStringFromByteArray(encrypted_IV) + "\n");
+                            bWriteLog.Write(logBuffer.ToArray());
+                            bWriteLog.Close();                        
 
-                        }
-                      
+                        }        
                     }
                     else
                     {
                         logs.AppendText("Signature of the ack message could not be verified!\n");
 
-
                     }
-
-
 
                 }
             }

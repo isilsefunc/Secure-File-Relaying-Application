@@ -127,6 +127,15 @@ namespace cs432_project_server
 
         private void Authentication(Socket thisClient, string clientName)
         {
+            byte[] initial_message = new byte[2];
+            thisClient.Receive(initial_message);
+            string initial_string = Encoding.Default.GetString(initial_message);
+            if(initial_string != "OK")
+            {
+                logs.AppendText("Error in the authentication protocol initiation phase!\n");
+                return;
+            }
+
             //sending random 128-bit nonce to user
             RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
             byte[] random128num = new byte[16];
@@ -202,10 +211,24 @@ namespace cs432_project_server
                 thisClient.Send(message_signed);
                 logs.AppendText("Sended signature over (encr(hmac_key) + ack) to client " + clientName + "\n");
                 logs.AppendText(generateHexStringFromByteArray(message_signed) + "\n" + "Signature size: " + message_signed.Length + "\n");
-                logs.AppendText("Client " + clientName + " has authanticated to the server\n");
 
-                //Starts listening to the client
-                Receive(thisClient, clientName, pubKeyClient, hmac_key_string);
+                byte[] last = new byte[6];
+                thisClient.Receive(last);
+                string last_message = Encoding.Default.GetString(last);
+
+                if (last_message == "OKBRUH")
+                {
+                    logs.AppendText("Client " + clientName + " has authanticated to the server, protocol completed!\n");
+                    //Starts listening to the client
+                    Receive(thisClient, clientName, pubKeyClient, hmac_key_string);
+                }
+                else if (last_message == "NOBRUH")
+                {
+                    logs.AppendText("Client " + clientName + " had problem in the last step of the protocol, could not connect!\n");
+                }
+                else
+                    logs.AppendText("Generic error!\n");
+                
             }
             else
             {
@@ -271,7 +294,7 @@ namespace cs432_project_server
                         bool terminate = false;
                         while (!terminate)
                         {
-                            if (File.Exists(textBox_database_path.Text + "/" + fileName_basic))
+                            if (File.Exists(textBox_database_path.Text + "/" + fileName_basic + ".txt"))
                             {
                                 filecount++;
                                 fileName_basic = fileName.Split('_')[0] + "_" + filecount.ToString();
@@ -329,24 +352,24 @@ namespace cs432_project_server
 
                             // Create the file and write into it 
                             BinaryWriter bWrite = new BinaryWriter(File.Open (textBox_database_path.Text + "/" + fileName_basic, FileMode.Append));
-                            bWrite.Write(bufferEncrypted);
+                            bWrite.Write(generateHexStringFromByteArray(bufferEncrypted));
                             bWrite.Close();
                             bufferEncrypted = null; // In order to prevent creating files over and over again
 
 
                             //Send  message to the client
                             byte[] filenameByte = Encoding.Default.GetBytes(fileName_basic);
-                            logs.AppendText("Filename hex is :");
+                            logs.AppendText("Filename hex is : ");
                             logs.AppendText(generateHexStringFromByteArray(filenameByte) + "\n");
                             thisClient.Send(filenameByte);
-                            logs.AppendText(fileName_basic + "\n");
+                            logs.AppendText("Sent filename to the client is " + fileName_basic + "\n");
 
                             //Sign the filenameme
                             byte[] signed_filename = signWithRSA(fileName_basic, 4096, privateKey);
 
                             //Send signed message to the client
                             thisClient.Send(signed_filename);
-                            logs.AppendText("Signed file name is :");
+                            logs.AppendText("Signed file name is : ");
                             logs.AppendText(generateHexStringFromByteArray(signed_filename) + "\n");
 
                         }

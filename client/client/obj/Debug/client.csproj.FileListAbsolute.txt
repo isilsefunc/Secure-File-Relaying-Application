@@ -61,3 +61,13 @@ C:\Users\Ömer Ekiz\Downloads\cs432_project (1)\cs432_project\client\client\obj\
 \\Mac\Home\Desktop\cs432_Project\cs432_project\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
 \\Mac\Home\Desktop\cs432_Project\cs432_project\client\client\obj\Debug\client.exe
 \\Mac\Home\Desktop\cs432_Project\cs432_project\client\client\obj\Debug\client.pdb
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\bin\Debug\client.exe.config
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\bin\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\bin\Debug\client.pdb
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.csprojAssemblyReference.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.Form1.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.csproj.GenerateResource.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.pdb
