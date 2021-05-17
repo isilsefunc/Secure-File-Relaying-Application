@@ -395,6 +395,73 @@ namespace cs432_project_server
 
                         }
                     }
+                    else if(receivedInfoHeader[0] == 1)// request/download
+                    {
+                        //receiving filename from client
+                        Byte[] filename = new Byte[64];
+                        thisClient.Receive(filename);
+                        string filename_string = Encoding.Default.GetString(filename).Trim('\0');
+                        logs.AppendText("File: "+ filename_string + " is requested to be downloaded by the client "+ username + "\n");
+
+                        //receiving signature
+                        byte[] filename_signature = new byte[512];
+                        thisClient.Receive(filename_signature);
+
+                        if(verifyWithRSA(filename_string, 4096, pubKeyClient, filename_signature))
+                        {
+                            logs.AppendText("Signature of the filename has been verified\n");
+                            //check whether given file exists,
+                            string fileOwner = filename_string.Split('_')[0];
+                            if (File.Exists(textBox_database_path.Text + "/" + filename_string))
+                            {
+                                if (clientList.Exists(x => x == fileOwner))//file owner of the client is online at the moment
+                                {
+                                    if (username == fileOwner)// given file belongs to the client
+                                    {
+                                        // Create the file and write into it 
+                                        //BinaryReader reader = new BinaryReader(File.Open(textBox_database_path.Text + "/" + filename_string, FileMode.Open));
+                                        //string enc_file;
+                                        //enc_file = reader.ReadString();
+                                        //reader.Close();
+                                        string enc_file = Encoding.Default.GetString(File.ReadAllBytes(textBox_database_path.Text + "/" + filename_string));
+
+                                        logs.AppendText("File: " + filename_string + " will be sent to client: "+ username + "!\n");
+                                        logs.AppendText("Hex Content: "+ enc_file + "\n");
+
+                                        //send encrypted file
+                                        byte[] file_buffer = hexStringToByteArray(enc_file);
+                                        thisClient.Send(file_buffer);
+
+                                        //send signature over encrypted file
+                                        byte[] sig_enc_file = signWithRSA(enc_file, 4096, privateKey);
+                                        thisClient.Send(sig_enc_file);
+                                        logs.AppendText("Signature of the encrypted file has sent: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
+                                    }
+                                    else
+                                    {
+                                        //TO DO: request protocol to other client will be implemented here
+                                    }
+                                }
+                                else
+                                {
+                                    logs.AppendText("File owner (" + filename_string + ") is not online at the moment, try again later to get download request!\n");
+                                    //TO DO: signed messages to inform client will be sent here
+                                }
+
+                            }
+                            else
+                            {
+                                logs.AppendText("There is no such file exists: " + filename_string + "!\n");
+                                //TO DO: signed messages to inform client will be sent here
+                            }
+                        }
+                        else
+                        {
+                            logs.AppendText("Signature over sended filename for download request is not verified for client " + username + "!\n");
+                            //TO DO: signed messages to inform client will be sent here
+                        }
+
+                    }
                 }
                 catch
                 {

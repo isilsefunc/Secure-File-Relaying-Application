@@ -738,5 +738,102 @@ namespace client
                 logs.AppendText("Problem with the password or private key\n");
             }
         }
+
+        private void download_button_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                //Send option indicator as 1, means Request/Download option
+                string file = textBox1.Text;
+                Byte[] infoHeader = new Byte[1];
+                infoHeader[0] = 1;
+                clientSocket.Send(infoHeader);
+
+                //Sending requested file's name to the server
+                byte[] filename = Encoding.Default.GetBytes(file);
+                clientSocket.Send(filename);
+
+                //Sending signature over filename
+                string privatekey_string = Encoding.Default.GetString(privateKey);
+                byte [] signature_filename = signWithRSA(file, 4096, privatekey_string);
+                clientSocket.Send(signature_filename);
+                logs.AppendText("Signature: " + generateHexStringFromByteArray(signature_filename) + "\n" + "signature size: " + signature_filename.Length);
+                logs.AppendText("Requested filename and signature has been sent to server!\n");
+
+                //Receiving encrypted file
+                byte[] file_byte = new byte[64];
+                clientSocket.Receive(file_byte);
+                string enc_file = Encoding.Default.GetString(file_byte).Trim('\0');
+
+                logs.AppendText("Encrypted file has been downloaded:\n");
+                logs.AppendText(enc_file + "\n");
+
+                //Receiving signature over  encrypted file
+                byte[] sig_enc_file = new byte[512];
+                clientSocket.Receive(sig_enc_file);
+                logs.AppendText("Signature of the received encrypted file: " + generateHexStringFromByteArray(sig_enc_file)+ "\n");
+
+                if(verifyWithRSA(enc_file,4096,serverPubKey,sig_enc_file))
+                {
+                    logs.AppendText("Signature of the server's response to download has been verified!\n");
+
+                    //Now we will search LOGS.txt for the corresponding AES key and IV for decryption of the file downloaded
+                    StreamReader logReader = new StreamReader(LOGS_Path);
+                    string hex_enc_AESkey = "";
+                    string hex_enc_IV = "";
+                    string line = "";
+                    bool rowfound = false;
+                    while ((line = logReader.ReadLine()) != null)//read each line
+                    {
+                        if (line.Split('\t')[1] == file)//if you find the correct file
+                        {
+                            hex_enc_AESkey = line.Split('\t')[2];//take aes and IV
+                            hex_enc_IV = line.Split('\t')[3];
+                            rowfound = true;
+                            break;
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    logReader.Close();
+
+                    if(rowfound)
+                    {
+                        //extracting plaintext AESkey and IV
+                        string enc_AESkey = Encoding.Default.GetString(hexStringToByteArray(hex_enc_AESkey));
+                        string enc_IV = Encoding.Default.GetString(hexStringToByteArray(hex_enc_IV));
+                        byte[] AESkey_byte = decryptWithRSA(enc_AESkey,4096,privatekey_string);
+                        byte[] IV_byte = decryptWithRSA(enc_AESkey, 4096, privatekey_string);
+
+                        //encryption of the downloaded by the file
+                        byte [] byte_file = decryptWithAES256(enc_file, AESkey_byte, IV_byte);
+                        string downlaoded_file = Encoding.Default.GetString(byte_file);
+
+                        // Create the file and write into it 
+                        BinaryWriter bWrite = new BinaryWriter(File.Open(repository + "/" + file, FileMode.Append));
+                        bWrite.Write(downlaoded_file);
+                        bWrite.Close();
+                        downlaoded_file = null; // In order to prevent creating files over and over again
+
+                    }
+                    else
+                    {
+                        logs.AppendText("Error occured bro!\n");
+                    }
+
+                }
+                else
+                {
+                    logs.AppendText("Signature of the server's response to download couldnt be verified!\n");
+                }
+
+            }
+            catch
+            {
+                logs.AppendText("Sıçtın moruk catche girdin!\n");
+            }
+        }
     }
 }

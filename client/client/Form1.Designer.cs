@@ -55,7 +55,7 @@
             // 
             this.textBox_ip.Enabled = false;
             this.textBox_ip.Location = new System.Drawing.Point(163, 54);
-            this.textBox_ip.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox_ip.Margin = new System.Windows.Forms.Padding(4);
             this.textBox_ip.Name = "textBox_ip";
             this.textBox_ip.Size = new System.Drawing.Size(187, 22);
             this.textBox_ip.TabIndex = 0;
@@ -64,7 +64,7 @@
             // 
             this.textBox_port.Enabled = false;
             this.textBox_port.Location = new System.Drawing.Point(163, 100);
-            this.textBox_port.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox_port.Margin = new System.Windows.Forms.Padding(4);
             this.textBox_port.Name = "textBox_port";
             this.textBox_port.Size = new System.Drawing.Size(187, 22);
             this.textBox_port.TabIndex = 1;
@@ -73,7 +73,7 @@
             // 
             this.textBox_username.Enabled = false;
             this.textBox_username.Location = new System.Drawing.Point(163, 149);
-            this.textBox_username.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox_username.Margin = new System.Windows.Forms.Padding(4);
             this.textBox_username.Name = "textBox_username";
             this.textBox_username.Size = new System.Drawing.Size(187, 22);
             this.textBox_username.TabIndex = 2;
@@ -111,7 +111,7 @@
             // logs
             // 
             this.logs.Location = new System.Drawing.Point(427, 54);
-            this.logs.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.logs.Margin = new System.Windows.Forms.Padding(4);
             this.logs.Name = "logs";
             this.logs.ReadOnly = true;
             this.logs.Size = new System.Drawing.Size(516, 341);
@@ -122,7 +122,7 @@
             // 
             this.button_connect.Enabled = false;
             this.button_connect.Location = new System.Drawing.Point(163, 183);
-            this.button_connect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button_connect.Margin = new System.Windows.Forms.Padding(4);
             this.button_connect.Name = "button_connect";
             this.button_connect.Size = new System.Drawing.Size(185, 28);
             this.button_connect.TabIndex = 7;
@@ -134,7 +134,7 @@
             // 
             this.button_disconnect.Enabled = false;
             this.button_disconnect.Location = new System.Drawing.Point(163, 219);
-            this.button_disconnect.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button_disconnect.Margin = new System.Windows.Forms.Padding(4);
             this.button_disconnect.Name = "button_disconnect";
             this.button_disconnect.Size = new System.Drawing.Size(183, 28);
             this.button_disconnect.TabIndex = 8;
@@ -146,7 +146,7 @@
             // 
             this.textBox_pass.Enabled = false;
             this.textBox_pass.Location = new System.Drawing.Point(163, 302);
-            this.textBox_pass.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox_pass.Margin = new System.Windows.Forms.Padding(4);
             this.textBox_pass.Name = "textBox_pass";
             this.textBox_pass.Size = new System.Drawing.Size(187, 22);
             this.textBox_pass.TabIndex = 9;
@@ -164,7 +164,7 @@
             // button_fileExplorer
             // 
             this.button_fileExplorer.Location = new System.Drawing.Point(163, 427);
-            this.button_fileExplorer.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button_fileExplorer.Margin = new System.Windows.Forms.Padding(4);
             this.button_fileExplorer.Name = "button_fileExplorer";
             this.button_fileExplorer.Size = new System.Drawing.Size(185, 28);
             this.button_fileExplorer.TabIndex = 14;
@@ -186,7 +186,7 @@
             // 
             this.textBox_key.Enabled = false;
             this.textBox_key.Location = new System.Drawing.Point(163, 395);
-            this.textBox_key.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox_key.Margin = new System.Windows.Forms.Padding(4);
             this.textBox_key.Name = "textBox_key";
             this.textBox_key.Size = new System.Drawing.Size(184, 22);
             this.textBox_key.TabIndex = 12;
@@ -195,7 +195,7 @@
             // 
             this.button_folderExplorer.Enabled = false;
             this.button_folderExplorer.Location = new System.Drawing.Point(163, 526);
-            this.button_folderExplorer.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.button_folderExplorer.Margin = new System.Windows.Forms.Padding(4);
             this.button_folderExplorer.Name = "button_folderExplorer";
             this.button_folderExplorer.Size = new System.Drawing.Size(185, 28);
             this.button_folderExplorer.TabIndex = 17;
@@ -217,7 +217,7 @@
             // 
             this.textBox_repository.Enabled = false;
             this.textBox_repository.Location = new System.Drawing.Point(163, 494);
-            this.textBox_repository.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.textBox_repository.Margin = new System.Windows.Forms.Padding(4);
             this.textBox_repository.Name = "textBox_repository";
             this.textBox_repository.Size = new System.Drawing.Size(187, 22);
             this.textBox_repository.TabIndex = 15;
@@ -244,6 +244,7 @@
             this.download_button.TabIndex = 19;
             this.download_button.Text = "Download Request";
             this.download_button.UseVisualStyleBackColor = true;
+            this.download_button.Click += new System.EventHandler(this.download_button_Click);
             // 
             // textBox1
             // 
@@ -292,7 +293,7 @@
             this.Controls.Add(this.textBox_username);
             this.Controls.Add(this.textBox_port);
             this.Controls.Add(this.textBox_ip);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "Form1";
             this.Text = "Form1";
             this.ResumeLayout(false);
