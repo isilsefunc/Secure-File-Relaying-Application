@@ -49,6 +49,9 @@
             this.download_button = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.button_authenticate = new System.Windows.Forms.Button();
+            this.label7 = new System.Windows.Forms.Label();
+            this.button_yes = new System.Windows.Forms.Button();
+            this.button_no = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBox_ip
@@ -225,7 +228,7 @@
             // upload_button
             // 
             this.upload_button.Enabled = false;
-            this.upload_button.Location = new System.Drawing.Point(427, 585);
+            this.upload_button.Location = new System.Drawing.Point(406, 526);
             this.upload_button.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.upload_button.Name = "upload_button";
             this.upload_button.Size = new System.Drawing.Size(181, 28);
@@ -237,7 +240,7 @@
             // download_button
             // 
             this.download_button.Enabled = false;
-            this.download_button.Location = new System.Drawing.Point(651, 585);
+            this.download_button.Location = new System.Drawing.Point(630, 526);
             this.download_button.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.download_button.Name = "download_button";
             this.download_button.Size = new System.Drawing.Size(176, 27);
@@ -249,7 +252,7 @@
             // textBox1
             // 
             this.textBox1.Enabled = false;
-            this.textBox1.Location = new System.Drawing.Point(651, 549);
+            this.textBox1.Location = new System.Drawing.Point(630, 490);
             this.textBox1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(177, 22);
@@ -267,11 +270,47 @@
             this.button_authenticate.UseVisualStyleBackColor = true;
             this.button_authenticate.Click += new System.EventHandler(this.authenticate_button_Click);
             // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(403, 595);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(81, 17);
+            this.label7.TabIndex = 22;
+            this.label7.Text = "Permission:";
+            // 
+            // button_yes
+            // 
+            this.button_yes.Enabled = false;
+            this.button_yes.Location = new System.Drawing.Point(511, 589);
+            this.button_yes.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.button_yes.Name = "button_yes";
+            this.button_yes.Size = new System.Drawing.Size(82, 28);
+            this.button_yes.TabIndex = 23;
+            this.button_yes.Text = "Yes";
+            this.button_yes.UseVisualStyleBackColor = true;
+            this.button_yes.Click += new System.EventHandler(this.button_yes_Click);
+            // 
+            // button_no
+            // 
+            this.button_no.Enabled = false;
+            this.button_no.Location = new System.Drawing.Point(511, 621);
+            this.button_no.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.button_no.Name = "button_no";
+            this.button_no.Size = new System.Drawing.Size(82, 28);
+            this.button_no.TabIndex = 24;
+            this.button_no.Text = "No";
+            this.button_no.UseVisualStyleBackColor = true;
+            this.button_no.Click += new System.EventHandler(this.button_no_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(981, 679);
+            this.Controls.Add(this.button_no);
+            this.Controls.Add(this.button_yes);
+            this.Controls.Add(this.label7);
             this.Controls.Add(this.button_authenticate);
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.download_button);
@@ -324,6 +363,9 @@
         private System.Windows.Forms.Button download_button;
         private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Button button_authenticate;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Button button_yes;
+        private System.Windows.Forms.Button button_no;
     }
 }
 

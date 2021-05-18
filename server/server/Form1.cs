@@ -21,7 +21,7 @@ namespace cs432_project_server
         List<Socket> clientSockets = new List<Socket>();
         List<string> clientList = new List<string>();
         //List<string> clientPubKeys = new List<string>();
-        //List<string> clientSessionKeys = new List<string>();
+        List<string> clientSessionKeys = new List<string>();
 
         bool terminating = false;
         bool listening = false;
@@ -173,7 +173,7 @@ namespace cs432_project_server
                 byte[] HMAC_Key = new byte[32];
                 rngCsp.GetBytes(HMAC_Key);//random HMAC session key value set
                 string hmac_key_string = Encoding.Default.GetString(HMAC_Key);
-                //clientSessionKeys.Add(hmac_key_string);//adding the sesh key with the client to memory
+                
                 logs.AppendText("HMAC Session Key\n");
                 logs.AppendText(generateHexStringFromByteArray(HMAC_Key) + "\n" + " HMAC Key size: " + HMAC_Key.Length + "\n");
 
@@ -220,6 +220,7 @@ namespace cs432_project_server
                 {
                     logs.AppendText("Client " + clientName + " has authanticated to the server, protocol completed!\n");
                     //Starts listening to the client
+                    clientSessionKeys.Add(hmac_key_string);//adding the sesh key with the client to memory
                     Receive(thisClient, clientName, pubKeyClient, hmac_key_string);
                 }
                 else if (last_message == "NOBRUH")
@@ -272,6 +273,9 @@ namespace cs432_project_server
 
                     if (receivedInfoHeader[0] == 0) //Upload
                     {
+                        Byte[] upload_header = new Byte[1];
+                        upload_header[0] = 0;
+                        thisClient.Send(upload_header);
 
                         // Receive the incoming File's name and size
                         Byte[] fileProperties = new Byte[256]; // First 128 Bytes are for Name, Last 128 for Size
@@ -317,10 +321,10 @@ namespace cs432_project_server
 
 
                         logs.AppendText("Recieved encrypted file is: \n");
-                        logs.AppendText(generateHexStringFromByteArray(bufferEncrypted)+ "\n\n");
+                        logs.AppendText(generateHexStringFromByteArray(bufferEncrypted) + "\n\n");
 
 
-                       
+
 
                         // Verify it using session authentication key for that client 
                         string key = sessionKey;
@@ -330,7 +334,7 @@ namespace cs432_project_server
                         logs.AppendText(generateHexStringFromByteArray(key_bytes) + "\n\n");
 
 
-                        byte[] hmac_toverify = applyHMACwithSHA256(enc_string, key_bytes);
+                        byte[] hmac_toverify = applyHMACwithSHA512(enc_string, key_bytes);
                         string hmac_toverify_string = Encoding.Default.GetString(hmac_toverify);
 
                         logs.AppendText("Generated HMAC  \n");
@@ -351,11 +355,15 @@ namespace cs432_project_server
                         {
 
                             // Create the file and write into it 
-                            BinaryWriter bWrite = new BinaryWriter(File.Open (textBox_database_path.Text + "/" + fileName_basic, FileMode.Append));
+                            /*BinaryWriter bWrite = new BinaryWriter(File.Open (textBox_database_path.Text + "/" + fileName_basic, FileMode.Append));
                             bWrite.Write(generateHexStringFromByteArray(bufferEncrypted));
                             bWrite.Close();
-                            bufferEncrypted = null; // In order to prevent creating files over and over again
+                            bufferEncrypted = null; // In order to prevent creating files over and over again*/
+                            //string hex_bufferEncrypted = generateHexStringFromByteArray(bufferEncrypted);
+                            //byte[] byte_hex_bufferEncrypted = Encoding.Default.GetBytes(hex_bufferEncrypted);
 
+                            //string hex_bufferEncrypted = generateHexStringFromByteArray(bufferEncrypted);
+                            File.WriteAllBytes(textBox_database_path.Text + "/" + fileName_basic, bufferEncrypted);
 
                             //Send  message to the client
                             byte[] filenameByte = Encoding.Default.GetBytes(fileName_basic);
@@ -395,8 +403,13 @@ namespace cs432_project_server
 
                         }
                     }
-                    else if(receivedInfoHeader[0] == 1)// request/download
+                    else if (receivedInfoHeader[0] == 1)// request/download
                     {
+                        //sends the header for the download operation
+                        Byte[] download_header = new Byte[1];
+                        download_header[0] = 1;
+                        thisClient.Send(download_header);
+
                         //receiving filename from client
                         Byte[] filename = new Byte[64];
                         thisClient.Receive(filename);
@@ -423,23 +436,78 @@ namespace cs432_project_server
                                         //string enc_file;
                                         //enc_file = reader.ReadString();
                                         //reader.Close();
-                                        string enc_file = Encoding.Default.GetString(File.ReadAllBytes(textBox_database_path.Text + "/" + filename_string));
+                                        byte[] enc_file = File.ReadAllBytes(textBox_database_path.Text + "/" + filename_string);
+                                        string enc_file_string = generateHexStringFromByteArray(enc_file);
+                                        //enc_file = enc_file.Substring(0, enc_file.IndexOf("\0"));
 
                                         logs.AppendText("File: " + filename_string + " will be sent to client: "+ username + "!\n");
-                                        logs.AppendText("Hex Content: "+ enc_file + "\n");
+                                        logs.AppendText("Hex Content: "+ enc_file_string + "\n");
+
+                                        Byte[] download_mode = new Byte[1];
+                                        download_mode[0] = 10;
+                                        thisClient.Send(download_mode);
 
                                         //send encrypted file
-                                        byte[] file_buffer = hexStringToByteArray(enc_file);
-                                        thisClient.Send(file_buffer);
+                                        //byte[] file_buffer = hexStringToByteArray(enc_file_string);
+                                        thisClient.Send(enc_file);
 
                                         //send signature over encrypted file
-                                        byte[] sig_enc_file = signWithRSA(enc_file, 4096, privateKey);
+                                        byte[] sig_enc_file = signWithRSA(enc_file_string, 4096, privateKey);
                                         thisClient.Send(sig_enc_file);
                                         logs.AppendText("Signature of the encrypted file has sent: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
                                     }
-                                    else
+                                    else//file will be requested from other client
                                     {
                                         //TO DO: request protocol to other client will be implemented here
+                                        int clientIndex = 0;
+                                        bool checker = false;
+                                        for (int i = 0; i < clientList.Count && !checker; i++)
+                                        {
+                                            if(clientList[i] == fileOwner)
+                                            {
+                                                clientIndex = i;
+                                                checker = true;
+                                            }
+                                        }
+                                        //gets the clientSocket for the owner of the file
+                                        Socket fileOwnerClient = clientSockets[clientIndex];
+                                        string fileowner_sesskey = clientSessionKeys[clientIndex];
+
+                                        //sends request header to fileOwnerClient
+                                        Byte[] header = new Byte[1];
+                                        header[0] = 2;
+                                        fileOwnerClient.Send(header);
+
+                                        Byte[] reqPropertiesBuffer = new Byte[128+128+pubKeyClient.Length+512];
+                                        Array.Copy(Encoding.Default.GetBytes(filename_string), reqPropertiesBuffer, filename_string.Length);
+                                        Array.Copy(Encoding.Default.GetBytes(username), 0, reqPropertiesBuffer, 128, username.Length);
+                                        Array.Copy(Encoding.Default.GetBytes(pubKeyClient), 0, reqPropertiesBuffer, 256, pubKeyClient.Length);
+                                        byte[] hmac_request = applyHMACwithSHA512(filename_string + username + pubKeyClient, Encoding.Default.GetBytes(fileowner_sesskey));
+                                        Array.Copy(hmac_request, 0, reqPropertiesBuffer, 256 + pubKeyClient.Length, hmac_request.Length);
+
+
+                                        logs.AppendText("File downlaod request will be sent:\n");
+                                        logs.AppendText("File owner: "+ fileOwner+ "\n");
+                                        logs.AppendText("Requestor: " + username + "\n");
+                                        logs.AppendText("File requested: " + filename_string + "\n");
+                                        logs.AppendText("Public Key of the fileowner: " + generateHexStringFromByteArray(Encoding.Default.GetBytes(pubKeyClient))+ "\nLength: "+pubKeyClient.Length+"\n");
+                                        logs.AppendText("HMAC appended to the message: " + generateHexStringFromByteArray(hmac_request) + "\n");
+
+                                        // Send the filePropertiesBuffer to the Server
+                                        fileOwnerClient.Send(reqPropertiesBuffer);
+
+
+
+
+
+
+
+                                        //sends a header for the download mode
+                                        string request_header = "REQ_HEAD";
+                                        byte[] request_header_byte = Encoding.Default.GetBytes(request_header);
+                                        fileOwnerClient.Send(request_header_byte);
+
+
                                     }
                                 }
                                 else
@@ -719,15 +787,15 @@ namespace cs432_project_server
             return result;
         }
 
-        // HMAC with SHA-256
-        static byte[] applyHMACwithSHA256(string input, byte[] key)
+        // HMAC with SHA-512
+        static byte[] applyHMACwithSHA512(string input, byte[] key)
         {
             // convert input string to byte array
             byte[] byteInput = Encoding.Default.GetBytes(input);
             // create HMAC applier object from System.Security.Cryptography
-            HMACSHA256 hmacSHA256 = new HMACSHA256(key);
+            HMACSHA512 hmacSHA512 = new HMACSHA512(key);
             // get the result of HMAC operation
-            byte[] result = hmacSHA256.ComputeHash(byteInput);
+            byte[] result = hmacSHA512.ComputeHash(byteInput);
 
             return result;
         }

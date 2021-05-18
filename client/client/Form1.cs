@@ -24,6 +24,8 @@ namespace client
         byte[] sessionKey;
         string serverPubKey;
         string LOGS_Path;
+        OpenFileDialog dialog;
+        int permission = 2;
 
         public Form1()
         {
@@ -224,6 +226,7 @@ namespace client
                         upload_button.Enabled = true;
                         download_button.Enabled = true;
                         textBox1.Enabled = true;
+                        Receive();
                     }
                     else
                     {
@@ -269,7 +272,393 @@ namespace client
             }
         }
 
+        private void Receive()
+        {
+            while (connected && !terminating)
+            {
+                try
+                {
+                    Byte[] header_buffer = new Byte[1];
+                    clientSocket.Receive(header_buffer);
+                    //header_string = Encoding.Default.GetString(header_buffer);
 
+                    if (header_buffer[0] == 0) //Upload
+                    {
+                        // Uploading a file to the Server
+                        try
+                        {
+                            // client generates random two numbers 256 bit AES key and 128 bit IV
+                            RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
+                            byte[] AESkey = new byte[32];
+                            rngCsp.GetBytes(AESkey);
+                            logs.AppendText("256 bit AES key:\n");
+                            logs.AppendText(generateHexStringFromByteArray(AESkey) + "\n");
+
+
+                            RNGCryptoServiceProvider rngCsp2 = new RNGCryptoServiceProvider();
+                            byte[] IV = new byte[16];
+                            rngCsp2.GetBytes(IV);
+                            logs.AppendText("128 bit IV:\n");
+                            logs.AppendText(generateHexStringFromByteArray(IV) + "\n");
+
+
+                            // Copy the data into generalBuffer
+                            Byte[] generalBuffer = new Byte[File.ReadAllBytes(dialog.FileName).Length];
+                            generalBuffer = File.ReadAllBytes(dialog.FileName);
+                            string plaintext = Encoding.Default.GetString(generalBuffer);
+
+
+                            // Files will be enrypted in CBC mode using AES key and IV
+                            byte[] encryptedWithAES256 = encryptWithAES256(plaintext, AESkey, IV);
+                            logs.AppendText("AES256 Encrypted file:");
+                            logs.AppendText(generateHexStringFromByteArray(encryptedWithAES256) + "\n");
+                            string s_encryptedWithAES256 = Encoding.Default.GetString(encryptedWithAES256);
+
+
+
+                            // Client generates the HMAC value of the encrypted file
+                            byte[] hmac_value = applyHMACwithSHA512(s_encryptedWithAES256, sessionKey);
+                            logs.AppendText("HMAC Value of the Encrypted File: ");
+                            logs.AppendText(generateHexStringFromByteArray(hmac_value) + "\n");
+                            string s_hmac_value = Encoding.Default.GetString(hmac_value);
+
+
+                            //Send file name file size to the server 
+                            int fileProperties = 256; // FileName + The Data's Length
+                            int fileNameLength = 128; // FileName
+                            string fileLength = s_encryptedWithAES256.Length.ToString(); // The Data's Length is turned into string 
+                                                                                            // to put into a Byte Array with the FileName
+                            Byte[] filePropertiesBuffer = new Byte[fileProperties]; // Allocate space for FileName and The Data's Length
+                                                                                    // Copy the FileName and The Data's Length into the filePropertiesBuffer
+                            string original_filename = dialog.SafeFileName;
+                            Array.Copy(Encoding.Default.GetBytes(dialog.SafeFileName), filePropertiesBuffer, dialog.SafeFileName.Length);
+                            Array.Copy(Encoding.Default.GetBytes(fileLength), 0, filePropertiesBuffer, fileNameLength, fileLength.Length);
+                            // Send the filePropertiesBuffer to the Server
+                            clientSocket.Send(filePropertiesBuffer);
+
+
+
+                            // Encrypted file and HMAC value and sent to server
+                            //byte[] enc_file = Encoding.Default.GetBytes(s_encryptedWithAES256);
+                            clientSocket.Send(encryptedWithAES256);
+                            clientSocket.Send(hmac_value);
+
+                            //Recieve acknowledgement
+                            Byte[] bufferAck = new Byte[64];
+                            clientSocket.Receive(bufferAck);
+                            string sAcknowledgement = Encoding.Default.GetString(bufferAck).Trim('\0');
+                            logs.AppendText("Received ack is : ");
+                            logs.AppendText(generateHexStringFromByteArray(bufferAck) + "\n");
+                            logs.AppendText(sAcknowledgement + "\n");
+
+                            //Recieve signed acknowledgement 
+                            Byte[] bufferAckSigned = new Byte[512];
+                            clientSocket.Receive(bufferAckSigned);
+                            logs.AppendText("Recieved signed ack is : ");
+                            logs.AppendText(generateHexStringFromByteArray(bufferAckSigned) + "\n");
+
+
+
+                            //Verify the signature
+                            if (verifyWithRSA(sAcknowledgement, 4096, serverPubKey, bufferAckSigned))
+                            {
+                                logs.AppendText("Signature of the ack message is verified\n");
+
+                                if (sAcknowledgement == "neg_ack")
+                                {
+                                    logs.AppendText("Returned ack equals to ");
+                                    logs.AppendText(sAcknowledgement + "\n");
+                                    logs.AppendText("File sent could not uploaded since HMAC is not verified");
+
+
+                                }
+                                else
+                                {
+                                    //returns the file name to the client 
+                                    string formatted_filename = sAcknowledgement;
+                                    logs.AppendText("Formatted filename equals to ");
+                                    logs.AppendText(sAcknowledgement + "\n");
+
+                                    //Store the file name, AES key, IV and formatted filename safely
+
+                                    // Write into LOGS.txt                          
+                                    BinaryWriter bWriteLog = new BinaryWriter(File.Open(LOGS_Path, FileMode.Append));
+                                    string AESkey_string = Encoding.Default.GetString(AESkey);
+                                    string IV_string = Encoding.Default.GetString(IV);
+                                    string privateKey_string = Encoding.Default.GetString(privateKey);
+                                    byte[] encrypted_AES = encryptWithRSA(AESkey_string, 4096, privateKey_string);
+                                    byte[] encrypted_IV = encryptWithRSA(IV_string, 4096, privateKey_string);
+                                    Byte[] logBuffer = Encoding.Default.GetBytes(original_filename + "\t" + formatted_filename + "\t"
+                                        + generateHexStringFromByteArray(encrypted_AES) + "\t" + generateHexStringFromByteArray(encrypted_IV) + "\n");
+                                    bWriteLog.Write(logBuffer.ToArray());
+                                    bWriteLog.Close();
+                                }
+                            }
+                            else
+                            {
+                                logs.AppendText("Signature of the ack message could not be verified!\n");
+
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex);
+                        }
+                    }
+                    else if(header_buffer[0] == 1) //Download mode where the client requests own file
+                    {
+                        try
+                        {
+                            string filename_string = textBox1.Text;
+
+                            //Sending requested file's name to the server
+                            byte[] filename = Encoding.Default.GetBytes(filename_string);
+                            clientSocket.Send(filename);
+
+                            //Sending signature over filename
+                            string privatekey_string = Encoding.Default.GetString(privateKey);
+                            byte[] signature_filename = signWithRSA(filename_string, 4096, privatekey_string);
+                            clientSocket.Send(signature_filename);
+                            logs.AppendText("Signature: " + generateHexStringFromByteArray(signature_filename) + "\n" + "signature size: " + signature_filename.Length);
+                            logs.AppendText("Requested filename and signature has been sent to server!\n");
+
+                            Byte[] download_mode = new Byte[1];
+                            clientSocket.Receive(download_mode);
+                            
+                            if (download_mode[0] == 10)//if it is your file that will be downloaded
+                            {
+                                //Receiving encrypted file
+                                byte[] file_byte = new byte[64];
+                                clientSocket.Receive(file_byte);
+
+                                string ciphertext = Encoding.Default.GetString(file_byte);
+                                ciphertext = ciphertext.Substring(0, ciphertext.IndexOf("\0"));
+
+
+                                byte[] ciphertext_byte = Encoding.Default.GetBytes(ciphertext);
+                                string enc_file = generateHexStringFromByteArray(ciphertext_byte);
+
+                                logs.AppendText("Encrypted file has been downloaded:\n");
+                                logs.AppendText("Hex content: " + enc_file + "\n");
+
+                                //Receiving signature over  encrypted file
+                                byte[] sig_enc_file = new byte[512];
+                                clientSocket.Receive(sig_enc_file);
+                                logs.AppendText("Signature of the received encrypted file: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
+
+                                if (verifyWithRSA(enc_file, 4096, serverPubKey, sig_enc_file))
+                                {
+                                    logs.AppendText("Signature of the server's response to download has been verified!\n");
+
+                                    //Now we will search LOGS.txt for the corresponding AES key and IV for decryption of the file downloaded
+                                    StreamReader logReader = new StreamReader(LOGS_Path);
+                                    string hex_enc_AESkey = "";
+                                    string hex_enc_IV = "";
+                                    string line = "";
+                                    bool rowfound = false;
+                                    while ((line = logReader.ReadLine()) != null)//read each line
+                                    {
+                                        if (line.Split('\t')[1] == filename_string)//if you find the correct file
+                                        {
+                                            hex_enc_AESkey = line.Split('\t')[2];//take aes and IV
+                                            hex_enc_IV = line.Split('\t')[3];
+                                            rowfound = true;
+                                            break;
+                                        }
+                                        else
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                    logReader.Close();
+
+                                    if (rowfound)
+                                    {
+                                        //extracting plaintext AESkey and IV
+                                        string enc_AESkey = Encoding.Default.GetString(hexStringToByteArray(hex_enc_AESkey));
+                                        string enc_IV = Encoding.Default.GetString(hexStringToByteArray(hex_enc_IV));
+                                        byte[] AESkey_byte = decryptWithRSA(enc_AESkey, 4096, privatekey_string);
+                                        byte[] IV_byte = decryptWithRSA(enc_IV, 4096, privatekey_string);
+
+                                        logs.AppendText("AES_KEY: " + generateHexStringFromByteArray(AESkey_byte) + "\n");
+                                        logs.AppendText("IV: " + generateHexStringFromByteArray(IV_byte) + "\n");
+
+                                        //encryption of the downloaded by the file
+                                        byte[] byte_file = decryptWithAES256(ciphertext, AESkey_byte, IV_byte);
+
+                                        //string downlaoded_file = Encoding.Default.GetString(byte_file);
+
+                                        File.WriteAllBytes(repository + "/" + filename_string, byte_file);
+                                        // Create the file and write into it 
+                                        /*BinaryWriter bWrite = new BinaryWriter(File.Open(repository + "/" + file, FileMode.Append));
+                                        bWrite.Write(downlaoded_file);
+                                        bWrite.Close();
+                                        downlaoded_file = null; // In order to prevent creating files over and over again*/
+
+                                    }
+                                    else
+                                    {
+                                        logs.AppendText("Error occured bro!\n");
+                                    }
+
+                                }
+                                else
+                                {
+                                    logs.AppendText("Signature of the server's response to download couldnt be verified!\n");
+                                }
+                            }
+                            else if (download_mode[0] == 11)//the file will be downloaded is not your file
+                            {
+
+                            }
+                            else if (download_mode[0] == 12)//there is a problem occured
+                            {
+
+                            }
+                            else
+                            {
+                                logs.AppendText("Sektin");
+                            }
+
+                           
+
+                        }
+                        catch
+                        {
+                            logs.AppendText("Sıçtın moruk catche girdin!\n");
+                        }
+                    }
+                    else if(header_buffer[0] == 2) //Request mode where the client requests some other client's file
+                    {
+                        byte[] request = new byte[256 + 512 + serverPubKey.Length];
+                        clientSocket.Receive(request);
+
+                        logs.AppendText("File download request has been received!\n");
+
+                        //taking filename
+                        string fileName = Encoding.Default.GetString(request.Take(128).ToArray());                   
+                        fileName = fileName.Substring(0, fileName.IndexOf("\0"));
+                        logs.AppendText("Filename requested to be downloaded : " + fileName +"\n");
+
+                        // Take username from buffer
+                        string username = Encoding.Default.GetString(request.Skip(128).Take(128).ToArray());
+                        username = username.Substring(0, username.IndexOf("\0"));
+                        logs.AppendText("Username : " + username + "\n");
+
+                        // Take pubkey of the requester client from buffer
+                        string pubkeyRequester = Encoding.Default.GetString(request.Skip(256).Take(serverPubKey.Length).ToArray());
+                        logs.AppendText("Public key of the requestor : " + generateHexStringFromByteArray(Encoding.Default.GetBytes(pubkeyRequester)) + "\n");
+
+                        // Take pubkey of the requester client from buffer
+                        string hmac_request_string = Encoding.Default.GetString(request.Skip(256+ serverPubKey.Length).Take(512).ToArray());
+                        hmac_request_string = hmac_request_string.Substring(0, hmac_request_string.IndexOf("\0"));
+                        logs.AppendText("HMAC of the request : " + generateHexStringFromByteArray(Encoding.Default.GetBytes(hmac_request_string)) + "\n");
+
+
+                        //generate HMAC with sessionkey
+                        byte[] hmac_request_genereated = applyHMACwithSHA512(fileName+username+pubkeyRequester,sessionKey);
+                        logs.AppendText("Generated HMAC : " + generateHexStringFromByteArray(hmac_request_genereated) + "\n");
+                        string hmac_request_generated_string = Encoding.Default.GetString(hmac_request_genereated);
+
+                        if(hmac_request_string == hmac_request_generated_string)
+                        {
+                            logs.AppendText("HMAC of the Download request relay message from server has been verified!\n");
+
+                            button_yes.Enabled = true;
+                            button_no.Enabled = true;
+
+                            while(permission == 2) { }//busy waiting on permissons (initial value is 2)
+
+
+                            if (permission == 1)// if permission granted
+                            {
+                                //Now we will search LOGS.txt for the corresponding AES key and IV for decryption of the file downloaded
+                                StreamReader logReader = new StreamReader(LOGS_Path);
+                                string hex_enc_AESkey = "";
+                                string hex_enc_IV = "";
+                                string line = "";
+                                string original_filename = "";
+                                bool rowfound = false;
+                                while ((line = logReader.ReadLine()) != null)//read each line
+                                {
+                                    if (line.Split('\t')[1] == fileName)//if you find the correct file
+                                    {
+                                        hex_enc_AESkey = line.Split('\t')[2];//take aes and IV
+                                        hex_enc_IV = line.Split('\t')[3];
+                                        original_filename = line.Split('\t')[0];
+                                        rowfound = true;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        continue;
+                                    }
+                                }
+                                logReader.Close();
+
+                                if (rowfound)
+                                {
+                                    //extracting plaintext AESkey and IV
+                                    string privatekey_string = Encoding.Default.GetString(privateKey);
+                                    string enc_AESkey = Encoding.Default.GetString(hexStringToByteArray(hex_enc_AESkey));
+                                    string enc_IV = Encoding.Default.GetString(hexStringToByteArray(hex_enc_IV));
+                                    byte[] AESkey_byte = decryptWithRSA(enc_AESkey, 4096, privatekey_string);
+                                    byte[] IV_byte = decryptWithRSA(enc_IV, 4096, privatekey_string);
+
+                                    logs.AppendText("AES_KEY that will be sent: " + generateHexStringFromByteArray(AESkey_byte) + "\n");
+                                    logs.AppendText("IV that will be sent: " + generateHexStringFromByteArray(IV_byte) + "\n");
+                                    logs.AppendText("Original filename will be sent :" + original_filename + "\n");
+                                    
+                                    byte [] concat = new byte[32 + 16 + 128 ];
+                                    Array.Copy(AESkey_byte, 0, concat, 0, 32);
+                                    Array.Copy(IV_byte, 0, concat, 32, 16);
+                                    Array.Copy(Encoding.Default.GetBytes(original_filename), 0, concat, 48, 128);
+                                    byte [] enc_request_response = encryptWithRSA(Encoding.Default.GetString(concat),4096,pubkeyRequester);
+                                    byte [] ack_message = Encoding.Default.GetBytes("OK");
+                                    byte[] ack_plus_response = new byte[enc_request_response.Length + 2];
+                                    Array.Copy(enc_request_response, 0, ack_plus_response, 0, enc_request_response.Length);
+                                    Array.Copy(ack_message,0, ack_plus_response, enc_request_response.Length, 2);
+
+                                    byte[] HMAC_server = applyHMACwithSHA512(Encoding.Default.GetString(ack_plus_response),sessionKey);
+
+                                    byte[] all_response = new byte[enc_request_response.Length + 2 + HMAC_server.Length];
+                                    Array.Copy(ack_plus_response, 0, all_response, 0, enc_request_response.Length + 2);
+                                    Array.Copy(HMAC_server,0,all_response, enc_request_response.Length + 2, HMAC_server.Length);
+
+                                    clientSocket.Send(all_response);
+
+
+                                }
+                                else
+                                {
+                                    logs.AppendText("Error occured bro!\n");
+                                }
+                            }
+                            else if (permission == 0)// if permission rejected
+                            {
+
+                            }
+                            permission = 2;//reinitializing the permission variable
+                        }
+                        else
+                        {
+                            logs.AppendText("HMAC of the Download request relay message from server is NOT verified!\n");
+                        }
+
+                    }
+                }
+                catch
+                {
+                    if (!terminating)
+                    {
+                        logs.AppendText("The server has disconnected\n");
+                    }
+                    clientSocket.Close();
+                    connected = false;
+                    terminating = true;
+                }
+            }
+        }
 
         private void button_connect_Click(object sender, EventArgs e)
         {
@@ -281,9 +670,6 @@ namespace client
 
             else
             {
-
-
-
                 clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 string IP = textBox_ip.Text;
                 int portNum;
@@ -330,7 +716,6 @@ namespace client
             privateKey = null;
             sessionKey = null;
             repository = "";
-
         }
 
         private void button_fileExplorer_Click(object sender, EventArgs e)
@@ -557,14 +942,14 @@ namespace client
         }
 
         // HMAC with SHA-256
-        static byte[] applyHMACwithSHA256(string input, byte[] key)
+        static byte[] applyHMACwithSHA512(string input, byte[] key)
         {
             // convert input string to byte array
             byte[] byteInput = Encoding.Default.GetBytes(input);
             // create HMAC applier object from System.Security.Cryptography
-            HMACSHA256 hmacSHA256 = new HMACSHA256(key);
+            HMACSHA512 hmacSHA512 = new HMACSHA512(key);
             // get the result of HMAC operation
-            byte[] result = hmacSHA256.ComputeHash(byteInput);
+            byte[] result = hmacSHA512.ComputeHash(byteInput);
 
             return result;
         }
@@ -575,143 +960,22 @@ namespace client
             try
             {
                 // Select the file
-                OpenFileDialog dialog = new OpenFileDialog();
+                dialog = new OpenFileDialog();
                 dialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*"; // Taken directly from docs
-
 
                 // If the file is selected
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-
-
                     // Send the 1 byte to inform the server that the client is sending a file
                     Byte[] infoHeader = new Byte[1];
                     infoHeader[0] = 0;
                     clientSocket.Send(infoHeader);
-
-                    // client generates random two numbers 256 bit AES key and 128 bit IV
-                    RNGCryptoServiceProvider rngCsp = new RNGCryptoServiceProvider();
-                    byte[] AESkey = new byte[32];
-                    rngCsp.GetBytes(AESkey);
-                    logs.AppendText("256 bit AES key:\n");
-                    logs.AppendText(generateHexStringFromByteArray(AESkey) + "\n");
-
-
-                    RNGCryptoServiceProvider rngCsp2 = new RNGCryptoServiceProvider();
-                    byte[] IV = new byte[16];
-                    rngCsp2.GetBytes(IV);
-                    logs.AppendText("128 bit IV:\n");
-                    logs.AppendText(generateHexStringFromByteArray(IV) + "\n");
-
-
-
-
-                    // Copy the data into generalBuffer
-                    Byte[] generalBuffer = new Byte[File.ReadAllBytes(dialog.FileName).Length];
-                    generalBuffer = File.ReadAllBytes(dialog.FileName);
-                    string plaintext = Encoding.Default.GetString(generalBuffer);
-
-
-                    // Files will be enrypted in CBC mode using AES key and IV
-                    byte[] encryptedWithAES256 = encryptWithAES256(plaintext, AESkey, IV);
-                    logs.AppendText("AES256 Encryption:");
-                    logs.AppendText(generateHexStringFromByteArray(encryptedWithAES256) + "\n");
-                    string s_encryptedWithAES256 = Encoding.Default.GetString(encryptedWithAES256);
-
-
-
-                    // Client generates the HMAC value of the encrypted file
-                    byte[] hmac_value = applyHMACwithSHA256(s_encryptedWithAES256, sessionKey);
-                    logs.AppendText("HMAC Value of the Encrypted File: ");
-                    logs.AppendText(generateHexStringFromByteArray(hmac_value) + "\n");
-                    string s_hmac_value = Encoding.Default.GetString(hmac_value);
-
-
-                    //Send file name file size to the server 
-                    int fileProperties = 256; // FileName + The Data's Length
-                    int fileNameLength = 128; // FileName
-                    string fileLength = s_encryptedWithAES256.Length.ToString(); // The Data's Length is turned into string 
-                                                                                              // to put into a Byte Array with the FileName
-                    Byte[] filePropertiesBuffer = new Byte[fileProperties]; // Allocate space for FileName and The Data's Length
-                    // Copy the FileName and The Data's Length into the filePropertiesBuffer
-                    string original_filename = dialog.SafeFileName;
-                    Array.Copy(Encoding.Default.GetBytes(dialog.SafeFileName), filePropertiesBuffer, dialog.SafeFileName.Length);
-                    Array.Copy(Encoding.Default.GetBytes(fileLength), 0, filePropertiesBuffer, fileNameLength, fileLength.Length);
-                    // Send the filePropertiesBuffer to the Server
-                    clientSocket.Send(filePropertiesBuffer);
-
-
-
-                    // Encrypted file and HMAC value and sent to server
-                    byte[] enc_file = Encoding.Default.GetBytes(s_encryptedWithAES256);
-                    clientSocket.Send(enc_file);
-                    clientSocket.Send(hmac_value);
-
-                    //Recieve acknowledgement
-                    Byte[] bufferAck = new Byte[64];
-                    clientSocket.Receive(bufferAck);
-                    string sAcknowledgement = Encoding.Default.GetString(bufferAck).Trim('\0');
-                    logs.AppendText("Recieved ack is : ");
-                    logs.AppendText(generateHexStringFromByteArray(bufferAck) + "\n");
-                    logs.AppendText(sAcknowledgement + "\n");
-
-                    //Recieve signed acknowledgement 
-                    Byte[] bufferAckSigned = new Byte[512];
-                    clientSocket.Receive(bufferAckSigned);
-                    logs.AppendText("Recieved signed ack is : ");
-                    logs.AppendText(generateHexStringFromByteArray(bufferAckSigned) + "\n");
-
-
-
-                    //Verify the signature
-                    if (verifyWithRSA(sAcknowledgement, 4096, serverPubKey, bufferAckSigned))
-                    {
-                        logs.AppendText("Signature of the ack message is verified\n");
-
-                        if(sAcknowledgement == "neg_ack")
-                        {
-                            logs.AppendText("Returned ack equals to ");
-                            logs.AppendText(sAcknowledgement + "\n");
-                            logs.AppendText("File sent could not uploaded since HMAC is not verified");
-
-
-                        }
-                        else
-                        {
-                            //returns the file name to the client 
-                            string formatted_filename = sAcknowledgement;
-                            logs.AppendText("Formatted filename equals to ");
-                            logs.AppendText(sAcknowledgement + "\n" );
-
-                            //Store the file name, AES key, IV and formatted filename safely
-
-                            // Write into LOGS.txt                          
-                            BinaryWriter bWriteLog = new BinaryWriter(File.Open(LOGS_Path, FileMode.Append));
-                            string AESkey_string = Encoding.Default.GetString(AESkey);
-                            string IV_string = Encoding.Default.GetString(IV);
-                            string privateKey_string = Encoding.Default.GetString(privateKey);
-                            byte[] encrypted_AES = encryptWithRSA(AESkey_string, 4096, privateKey_string);
-                            byte[] encrypted_IV = encryptWithRSA(IV_string, 4096, privateKey_string);
-                            Byte[] logBuffer = Encoding.Default.GetBytes(original_filename + "\t" + formatted_filename + "\t"
-                                + generateHexStringFromByteArray(encrypted_AES) + "\t" + generateHexStringFromByteArray(encrypted_IV) + "\n");
-                            bWriteLog.Write(logBuffer.ToArray());
-                            bWriteLog.Close();                        
-
-                        }        
-                    }
-                    else
-                    {
-                        logs.AppendText("Signature of the ack message could not be verified!\n");
-
-                    }
-
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logs.AppendText(ex.Message);
             }
-
         }
 
         private void authenticate_button_Click(object sender, EventArgs e)
@@ -744,96 +1008,28 @@ namespace client
             try
             {
                 //Send option indicator as 1, means Request/Download option
-                string file = textBox1.Text;
                 Byte[] infoHeader = new Byte[1];
                 infoHeader[0] = 1;
                 clientSocket.Send(infoHeader);
-
-                //Sending requested file's name to the server
-                byte[] filename = Encoding.Default.GetBytes(file);
-                clientSocket.Send(filename);
-
-                //Sending signature over filename
-                string privatekey_string = Encoding.Default.GetString(privateKey);
-                byte [] signature_filename = signWithRSA(file, 4096, privatekey_string);
-                clientSocket.Send(signature_filename);
-                logs.AppendText("Signature: " + generateHexStringFromByteArray(signature_filename) + "\n" + "signature size: " + signature_filename.Length);
-                logs.AppendText("Requested filename and signature has been sent to server!\n");
-
-                //Receiving encrypted file
-                byte[] file_byte = new byte[64];
-                clientSocket.Receive(file_byte);
-                string enc_file = Encoding.Default.GetString(file_byte).Trim('\0');
-
-                logs.AppendText("Encrypted file has been downloaded:\n");
-                logs.AppendText(enc_file + "\n");
-
-                //Receiving signature over  encrypted file
-                byte[] sig_enc_file = new byte[512];
-                clientSocket.Receive(sig_enc_file);
-                logs.AppendText("Signature of the received encrypted file: " + generateHexStringFromByteArray(sig_enc_file)+ "\n");
-
-                if(verifyWithRSA(enc_file,4096,serverPubKey,sig_enc_file))
-                {
-                    logs.AppendText("Signature of the server's response to download has been verified!\n");
-
-                    //Now we will search LOGS.txt for the corresponding AES key and IV for decryption of the file downloaded
-                    StreamReader logReader = new StreamReader(LOGS_Path);
-                    string hex_enc_AESkey = "";
-                    string hex_enc_IV = "";
-                    string line = "";
-                    bool rowfound = false;
-                    while ((line = logReader.ReadLine()) != null)//read each line
-                    {
-                        if (line.Split('\t')[1] == file)//if you find the correct file
-                        {
-                            hex_enc_AESkey = line.Split('\t')[2];//take aes and IV
-                            hex_enc_IV = line.Split('\t')[3];
-                            rowfound = true;
-                            break;
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-                    logReader.Close();
-
-                    if(rowfound)
-                    {
-                        //extracting plaintext AESkey and IV
-                        string enc_AESkey = Encoding.Default.GetString(hexStringToByteArray(hex_enc_AESkey));
-                        string enc_IV = Encoding.Default.GetString(hexStringToByteArray(hex_enc_IV));
-                        byte[] AESkey_byte = decryptWithRSA(enc_AESkey,4096,privatekey_string);
-                        byte[] IV_byte = decryptWithRSA(enc_AESkey, 4096, privatekey_string);
-
-                        //encryption of the downloaded by the file
-                        byte [] byte_file = decryptWithAES256(enc_file, AESkey_byte, IV_byte);
-                        string downlaoded_file = Encoding.Default.GetString(byte_file);
-
-                        // Create the file and write into it 
-                        BinaryWriter bWrite = new BinaryWriter(File.Open(repository + "/" + file, FileMode.Append));
-                        bWrite.Write(downlaoded_file);
-                        bWrite.Close();
-                        downlaoded_file = null; // In order to prevent creating files over and over again
-
-                    }
-                    else
-                    {
-                        logs.AppendText("Error occured bro!\n");
-                    }
-
-                }
-                else
-                {
-                    logs.AppendText("Signature of the server's response to download couldnt be verified!\n");
-                }
-
             }
             catch
             {
-                logs.AppendText("Sıçtın moruk catche girdin!\n");
+                logs.AppendText("Couldn't send to the server");
             }
+        }
+
+        private void button_yes_Click(object sender, EventArgs e)
+        {
+            permission = 1;
+            button_yes.Enabled = false;
+            button_no.Enabled = false;
+        }
+
+        private void button_no_Click(object sender, EventArgs e)
+        {
+            permission = 0;
+            button_yes.Enabled = false;
+            button_no.Enabled = false;
         }
     }
 }

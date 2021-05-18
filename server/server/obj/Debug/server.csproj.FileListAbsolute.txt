@@ -73,3 +73,22 @@ C:\Users\Batuhan Demir\Desktop\repos\CS432-project\server\server\obj\Debug\serve
 C:\Users\Batuhan Demir\Desktop\repos\CS432-project\server\server\obj\Debug\server.csproj.CoreCompileInputs.cache
 C:\Users\Batuhan Demir\Desktop\repos\CS432-project\server\server\obj\Debug\server.exe
 C:\Users\Batuhan Demir\Desktop\repos\CS432-project\server\server\obj\Debug\server.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\bin\Debug\server.exe.config
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\bin\Debug\server.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\bin\Debug\server.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.csprojResolveAssemblyReference.cache
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\obj\Debug\cs432_project_server.Form1.resources
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.Properties.Resources.resources
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.csproj.GenerateResource.Cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\bin\Debug\server.exe.config
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\bin\Debug\server.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\bin\Debug\server.pdb
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.csprojAssemblyReference.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\cs432_project_server.Form1.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.Properties.Resources.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.csproj.GenerateResource.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.csproj.CoreCompileInputs.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\server\server\obj\Debug\server.pdb
