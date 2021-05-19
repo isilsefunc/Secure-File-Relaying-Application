@@ -294,7 +294,7 @@ namespace client
                             rngCsp.GetBytes(AESkey);
                             logs.AppendText("256 bit AES key:\n");
                             logs.AppendText(generateHexStringFromByteArray(AESkey) + "\n");
-
+                            
 
                             RNGCryptoServiceProvider rngCsp2 = new RNGCryptoServiceProvider();
                             byte[] IV = new byte[16];
@@ -311,8 +311,8 @@ namespace client
 
                             // Files will be enrypted in CBC mode using AES key and IV
                             byte[] encryptedWithAES256 = encryptWithAES256(plaintext, AESkey, IV);
-                            logs.AppendText("AES256 Encrypted file:");
-                            logs.AppendText(generateHexStringFromByteArray(encryptedWithAES256) + "\n");
+                            logs.AppendText("AES256 Encrypted file: ");
+                            //logs.AppendText(generateHexStringFromByteArray(encryptedWithAES256) + "\n");
                             string s_encryptedWithAES256 = Encoding.Default.GetString(encryptedWithAES256);
 
 
@@ -430,12 +430,14 @@ namespace client
                             if (download_mode[0] == 10)//if it is your file that will be downloaded
                             {
                                 //Receiving encrypted file
-                                byte[] file_byte = new byte[64];
+                                byte[] file_size_byte = new byte[64];
+                                clientSocket.Receive(file_size_byte);
+                                int fileSize = Int32.Parse(Encoding.Default.GetString(file_size_byte).Trim('\0'));
+                                logs.AppendText("File size received is "+ fileSize +"\n");
+                                byte[] file_byte = new byte[fileSize];
                                 clientSocket.Receive(file_byte);
 
-                                string ciphertext = Encoding.Default.GetString(file_byte);
-                                ciphertext = ciphertext.Substring(0, ciphertext.IndexOf("\0"));
-
+                                string ciphertext = Encoding.Default.GetString(file_byte).Trim('\0');                           
 
                                 byte[] ciphertext_byte = Encoding.Default.GetBytes(ciphertext);
                                 string enc_file = generateHexStringFromByteArray(ciphertext_byte);
@@ -514,7 +516,7 @@ namespace client
                                 byte[] packet_size_byte = new byte[128];
                                 clientSocket.Receive(packet_size_byte);
                                 int packet_size = Int32.Parse(Encoding.Default.GetString(packet_size_byte).Trim('\0'));
-
+                                
                                 byte[] file_size_byte = new byte[128];
                                 clientSocket.Receive(file_size_byte);
                                 int file_size = Int32.Parse(Encoding.Default.GetString(file_size_byte).Trim('\0'));
@@ -568,12 +570,12 @@ namespace client
                             }
                             else
                             {
-                                logs.AppendText("Sektin");
+                                logs.AppendText("You received a erroneous download mode header!\n"); 
                             }
                         }
                         catch
                         {
-                            logs.AppendText("Sıçtın moruk catche girdin!\n");
+                            logs.AppendText("Problem occured on download phase!\n"); 
                         }
                     }
                     else if(header_string == "REQUST") //Request mode where the client requests some other client's file
@@ -613,12 +615,18 @@ namespace client
 
                             button_yes.Enabled = true;
                             button_no.Enabled = true;
+                            download_button.Enabled = false;
+                            upload_button.Enabled = false;
+                            textBox1.Enabled = false;
 
                             while(permission == 2) { }//busy waiting on permissons (initial value is 2)
 
 
                             if (permission == 1)// if permission granted
                             {
+                                download_button.Enabled = true;
+                                upload_button.Enabled = true;
+                                textBox1.Enabled = true;
                                 //Now we will search LOGS.txt for the corresponding AES key and IV for decryption of the file downloaded
                                 StreamReader logReader = new StreamReader(LOGS_Path);
                                 string hex_enc_AESkey = "";
@@ -692,6 +700,10 @@ namespace client
                             }
                             else if (permission == 0)// if permission rejected
                             {
+                                download_button.Enabled = true;
+                                upload_button.Enabled = true;
+                                textBox1.Enabled = true;
+
                                 byte[] neg_ack_message = Encoding.Default.GetBytes("NOO");
                                 byte[] HMAC_server = applyHMACwithSHA512("NOO", sessionKey);
                                 logs.AppendText("HMAC that will be sent to server with response: "+ generateHexStringFromByteArray(HMAC_server) +"\n");
@@ -722,6 +734,20 @@ namespace client
                     clientSocket.Close();
                     connected = false;
                     terminating = true;
+                    button_disconnect.Enabled = false;
+                    button_authenticate.Enabled = false;
+                    textBox_pass.Enabled = false;
+                    textBox_ip.Enabled = true;
+                    textBox_port.Enabled = true;
+                    textBox_username.Enabled = true;
+                    button_fileExplorer.Enabled = true;
+                    upload_button.Enabled = false;
+                    download_button.Enabled = false;
+                    textBox1.Enabled = false;
+
+                    privateKey = null;
+                    sessionKey = null;
+                    repository = "";
                 }
             }
         }
@@ -779,6 +805,10 @@ namespace client
             textBox_port.Enabled = true;
             textBox_username.Enabled = true;
             button_fileExplorer.Enabled = true;
+            upload_button.Enabled = false;
+            download_button.Enabled = false;
+            textBox1.Enabled = false;
+            
             privateKey = null;
             sessionKey = null;
             repository = "";

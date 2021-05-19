@@ -104,6 +104,7 @@ namespace cs432_project_server
                     {
                         logs.AppendText("--"+user + "\n");
                     }
+                    logs.AppendText("ClientSockets size: " + clientSockets.Count() + "\n");
 
                     try
                     {
@@ -120,6 +121,8 @@ namespace cs432_project_server
                             logs.AppendText("--" + user + "\n");
                         }
                         thisClient.Close();
+                        clientSockets.Remove(thisClient);
+                        logs.AppendText("ClientSockets size: " + clientSockets.Count() + "\n");
                     }
                 }
             }
@@ -133,6 +136,16 @@ namespace cs432_project_server
             if(initial_string != "OK")
             {
                 logs.AppendText("Error in the authentication protocol initiation phase!\n");
+                logs.AppendText(clientName + " disconnected.\n");
+                clientList.Remove(clientName);
+                logs.AppendText("Current Client List:\n");
+                foreach (string user in clientList)
+                {
+                    logs.AppendText("--" + user + "\n");
+                }            
+                thisClient.Close();
+                clientSockets.Remove(thisClient);
+                logs.AppendText("ClientSockets size: " + clientSockets.Count() + "\n");
                 return;
             }
 
@@ -321,7 +334,7 @@ namespace cs432_project_server
 
 
                         logs.AppendText("Recieved encrypted file is: \n");
-                        logs.AppendText(generateHexStringFromByteArray(bufferEncrypted) + "\n\n");
+                        //logs.AppendText(generateHexStringFromByteArray(bufferEncrypted) + "\n\n");
 
 
 
@@ -441,7 +454,7 @@ namespace cs432_project_server
                                         //enc_file = enc_file.Substring(0, enc_file.IndexOf("\0"));
 
                                         logs.AppendText("File: " + filename_string + " will be sent to client: "+ username + "!\n");
-                                        logs.AppendText("Hex Content: "+ enc_file_string + "\n");
+                                        //logs.AppendText("Hex Content: "+ enc_file_string + "\n");
 
                                         Byte[] download_mode = new Byte[1];
                                         download_mode[0] = 10;
@@ -449,6 +462,9 @@ namespace cs432_project_server
 
                                         //send encrypted file
                                         //byte[] file_buffer = hexStringToByteArray(enc_file_string);
+                                        byte [] file_size = Encoding.Default.GetBytes(enc_file.Length.ToString());
+                                        logs.AppendText("File size is " + enc_file.Length + "\n");
+                                        thisClient.Send(file_size);
                                         thisClient.Send(enc_file);
 
                                         //send signature over encrypted file
@@ -463,6 +479,7 @@ namespace cs432_project_server
                                         bool checker = false;
                                         for (int i = 0; i < clientList.Count && !checker; i++)
                                         {
+                                            logs.AppendText("Client: " + clientList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
                                             if(clientList[i] == fileOwner)
                                             {
                                                 clientIndex = i;
@@ -470,13 +487,13 @@ namespace cs432_project_server
                                             }
                                         }
                                         //gets the clientSocket for the owner of the file
-                                        Socket fileOwnerClient = clientSockets[clientIndex];
+                                        //Socket fileOwnerClient = clientSockets[clientIndex];
                                         string fileowner_sesskey = clientSessionKeys[clientIndex];
 
                                         //sends request header to fileOwnerClient
                                         Byte[] header = new Byte[6];
                                         header = Encoding.Default.GetBytes("REQUST");
-                                        fileOwnerClient.Send(header);
+                                        clientSockets[clientIndex].Send(header);
 
                                         Byte[] reqPropertiesBuffer = new Byte[128+128+pubKeyClient.Length+64];
                                         Array.Copy(Encoding.Default.GetBytes(filename_string), reqPropertiesBuffer, filename_string.Length);
@@ -494,10 +511,10 @@ namespace cs432_project_server
                                         logs.AppendText("HMAC appended to the message: " + generateHexStringFromByteArray(hmac_request) + "\n");
 
                                         // Send the filePropertiesBuffer to the Server
-                                        fileOwnerClient.Send(reqPropertiesBuffer);                                       
+                                        clientSockets[clientIndex].Send(reqPropertiesBuffer);                                       
 
-                                        byte[] reqResponse = new byte[579];                                                                              
-                                        fileOwnerClient.Receive(reqResponse);
+                                        byte[] reqResponse = new byte[579];
+                                        clientSockets[clientIndex].Receive(reqResponse);
                                         reqResponse = Encoding.Default.GetBytes(Encoding.Default.GetString(reqResponse).Trim('\0'));
                                         int length = reqResponse.Length;
 
@@ -557,7 +574,7 @@ namespace cs432_project_server
                                                 thisClient.Send(packet_size);
 
                                                 byte[] file_size = Encoding.Default.GetBytes(enc_file.Length.ToString());
-                                                logs.AppendText("Size of the packet: " + enc_file.Length + "\n");
+                                                logs.AppendText("Size of the file: " + enc_file.Length + "\n");
                                                 thisClient.Send(file_size);
 
                                                 //Sends the packet
@@ -603,9 +620,11 @@ namespace cs432_project_server
                         logs.AppendText(username + " has disconnected\n");
                         try
                         {
-                            clientList.Remove(username);//removes username if disconnected
-                            int index = clientList.IndexOf(username);
+                            
+                            int index = clientList.IndexOf(username);//removes sessionKey if disconnected
                             clientSessionKeys.Remove(clientSessionKeys[index]);
+                            clientList.Remove(username);//removes username if disconnected
+
                             // current clientlist will be printed here
                             logs.AppendText("Current Client List:\n");
                             foreach (string user in clientList)
@@ -620,6 +639,7 @@ namespace cs432_project_server
                     }
                     thisClient.Close();
                     clientSockets.Remove(thisClient);
+                    logs.AppendText("ClientSockets size: " + clientSockets.Count() + "\n");
                     connected = false;
                 }
             }
@@ -692,6 +712,7 @@ namespace cs432_project_server
             {
                 button_fileExplorer.Enabled = false;
                 button_database_explorer.Enabled = true;
+                button_folderExplorer.Enabled = false;
                 //textBox_port.Enabled = true;
                 //button_serverStart.Enabled = true;
             }
@@ -879,6 +900,7 @@ namespace cs432_project_server
                 button_folderExplorer.Enabled = false;
                 textBox_port.Enabled = true;
                 button_serverStart.Enabled = true;
+                button_database_explorer.Enabled = false;
             }
         }
 
