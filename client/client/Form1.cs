@@ -278,11 +278,12 @@ namespace client
             {
                 try
                 {
-                    Byte[] header_buffer = new Byte[1];
+                    Byte[] header_buffer = new Byte[6];
                     clientSocket.Receive(header_buffer);
-                    //header_string = Encoding.Default.GetString(header_buffer);
+                    string header_string = Encoding.Default.GetString(header_buffer);
+                    logs.AppendText("Received Header: " + header_string + "\n");
 
-                    if (header_buffer[0] == 0) //Upload
+                    if (header_string == "UPLOAD") //Upload
                     {
                         // Uploading a file to the Server
                         try
@@ -405,7 +406,7 @@ namespace client
                             Console.WriteLine(ex);
                         }
                     }
-                    else if(header_buffer[0] == 1) //Download mode where the client requests own file
+                    else if(header_string == "DOLOAD") //Download mode where the client requests own file
                     {
                         try
                         {
@@ -419,12 +420,13 @@ namespace client
                             string privatekey_string = Encoding.Default.GetString(privateKey);
                             byte[] signature_filename = signWithRSA(filename_string, 4096, privatekey_string);
                             clientSocket.Send(signature_filename);
-                            logs.AppendText("Signature: " + generateHexStringFromByteArray(signature_filename) + "\n" + "signature size: " + signature_filename.Length);
+                            logs.AppendText("Signature: " + generateHexStringFromByteArray(signature_filename) + "\n" + "signature size: " + signature_filename.Length+"\n");
                             logs.AppendText("Requested filename and signature has been sent to server!\n");
 
                             Byte[] download_mode = new Byte[1];
                             clientSocket.Receive(download_mode);
-                            
+                            logs.AppendText("Download mode: " + download_mode[0] + "\n");
+
                             if (download_mode[0] == 10)//if it is your file that will be downloaded
                             {
                                 //Receiving encrypted file
@@ -507,42 +509,88 @@ namespace client
                                     logs.AppendText("Signature of the server's response to download couldnt be verified!\n");
                                 }
                             }
-                            else if (download_mode[0] == 11)//the file will be downloaded is not your file
+                            else if (download_mode[0] == 11)//the file will be downloaded from another client
                             {
+                                byte[] packet_size_byte = new byte[128];
+                                clientSocket.Receive(packet_size_byte);
+                                int packet_size = Int32.Parse(Encoding.Default.GetString(packet_size_byte).Trim('\0'));
+
+                                byte[] file_size_byte = new byte[128];
+                                clientSocket.Receive(file_size_byte);
+                                int file_size = Int32.Parse(Encoding.Default.GetString(file_size_byte).Trim('\0'));
+
+                                byte[] packet = new byte[packet_size];
+                                clientSocket.Receive(packet);
+                                logs.AppendText("Hex-string of the entire packet: " + generateHexStringFromByteArray(packet) + "\n");
+                                
+                                byte[] packet_contents = packet.Take(packet.Length - 512).ToArray();
+                                logs.AppendText("Hex-string of the encrypted packet content: " + generateHexStringFromByteArray(packet_contents) + "\n");
+
+                                byte[] packet_contents_signature = packet.Skip(packet.Length - 512).Take(512).ToArray();
+                                logs.AppendText("Hex-string of the signature: " + generateHexStringFromByteArray(packet_contents_signature) + "\n");
+
+                                //verifies the packet
+                                if(verifyWithRSA(Encoding.Default.GetString(packet_contents), 4096, serverPubKey, packet_contents_signature))
+                                {
+                                    byte[] enc_aes_parameters = packet_contents.Take(packet_contents.Length - file_size).ToArray();
+                                    byte[] cipthertext = packet_contents.Skip(packet_contents.Length - file_size).Take(file_size).ToArray();
+
+                                    byte[] aes_parameters = decryptWithRSA(Encoding.Default.GetString(enc_aes_parameters), 4096, privatekey_string);
+                                    logs.AppendText("Hex-string of decrypted packet content: " + generateHexStringFromByteArray(aes_parameters) + "\n");
+
+                                    byte[] aes_key = aes_parameters.Take(32).ToArray();
+                                    logs.AppendText("Hex-string of aes_key: " + generateHexStringFromByteArray(aes_key) + "\n");
+
+                                    byte[] IV = aes_parameters.Skip(32).Take(16).ToArray();
+                                    logs.AppendText("Hex-string of IV: " + generateHexStringFromByteArray(IV) + "\n");
+
+                                    byte[] original_filename = aes_parameters.Skip(48).Take(aes_parameters.Length - 48).ToArray();
+                                    string original_filename_string = Encoding.Default.GetString(original_filename);
+                                    logs.AppendText("Original file_name: " + Encoding.Default.GetString(original_filename) + "\n");
+
+                                    byte[] plaintext = decryptWithAES256(Encoding.Default.GetString(cipthertext), aes_key, IV);
+                                    File.WriteAllBytes(repository + "/" + original_filename_string, plaintext);
+                                    logs.AppendText("File was succesfully downloaded!\n");
+                                }
+                                else
+                                {
+                                    logs.AppendText("The server's signature was NOT verified\n");
+                                }
 
                             }
                             else if (download_mode[0] == 12)//there is a problem occured
                             {
-
+                                byte[] message = new byte[256];
+                                clientSocket.Receive(message);
+                                string message_string = Encoding.Default.GetString(message).Trim('\0');
+                                logs.AppendText("Your download request FAILED!\n");
+                                logs.AppendText("Server: " + message_string + "\n");
                             }
                             else
                             {
                                 logs.AppendText("Sektin");
                             }
-
-                           
-
                         }
                         catch
                         {
                             logs.AppendText("Sıçtın moruk catche girdin!\n");
                         }
                     }
-                    else if(header_buffer[0] == 2) //Request mode where the client requests some other client's file
+                    else if(header_string == "REQUST") //Request mode where the client requests some other client's file
                     {
-                        byte[] request = new byte[256 + 512 + serverPubKey.Length];
+                        byte[] request = new byte[256 + 64 + serverPubKey.Length];
                         clientSocket.Receive(request);
 
                         logs.AppendText("File download request has been received!\n");
 
                         //taking filename
                         string fileName = Encoding.Default.GetString(request.Take(128).ToArray());                   
-                        fileName = fileName.Substring(0, fileName.IndexOf("\0"));
+                        fileName = fileName.Trim('\0');
                         logs.AppendText("Filename requested to be downloaded : " + fileName +"\n");
 
                         // Take username from buffer
                         string username = Encoding.Default.GetString(request.Skip(128).Take(128).ToArray());
-                        username = username.Substring(0, username.IndexOf("\0"));
+                        username = username.Trim('\0');
                         logs.AppendText("Username : " + username + "\n");
 
                         // Take pubkey of the requester client from buffer
@@ -550,8 +598,7 @@ namespace client
                         logs.AppendText("Public key of the requestor : " + generateHexStringFromByteArray(Encoding.Default.GetBytes(pubkeyRequester)) + "\n");
 
                         // Take pubkey of the requester client from buffer
-                        string hmac_request_string = Encoding.Default.GetString(request.Skip(256+ serverPubKey.Length).Take(512).ToArray());
-                        hmac_request_string = hmac_request_string.Substring(0, hmac_request_string.IndexOf("\0"));
+                        string hmac_request_string = Encoding.Default.GetString(request.Skip(256+ serverPubKey.Length).Take(64).ToArray());                       
                         logs.AppendText("HMAC of the request : " + generateHexStringFromByteArray(Encoding.Default.GetBytes(hmac_request_string)) + "\n");
 
 
@@ -609,21 +656,30 @@ namespace client
                                     logs.AppendText("IV that will be sent: " + generateHexStringFromByteArray(IV_byte) + "\n");
                                     logs.AppendText("Original filename will be sent :" + original_filename + "\n");
                                     
-                                    byte [] concat = new byte[32 + 16 + 128 ];
+                                    byte [] concat = new byte[32 + 16 + original_filename.Length];
                                     Array.Copy(AESkey_byte, 0, concat, 0, 32);
                                     Array.Copy(IV_byte, 0, concat, 32, 16);
-                                    Array.Copy(Encoding.Default.GetBytes(original_filename), 0, concat, 48, 128);
+                                    Array.Copy(Encoding.Default.GetBytes(original_filename), 0, concat, 48, original_filename.Length);
                                     byte [] enc_request_response = encryptWithRSA(Encoding.Default.GetString(concat),4096,pubkeyRequester);
-                                    byte [] ack_message = Encoding.Default.GetBytes("OK");
-                                    byte[] ack_plus_response = new byte[enc_request_response.Length + 2];
-                                    Array.Copy(enc_request_response, 0, ack_plus_response, 0, enc_request_response.Length);
-                                    Array.Copy(ack_message,0, ack_plus_response, enc_request_response.Length, 2);
+                                    logs.AppendText("Encrypted IV + AES + original_filename: "+ generateHexStringFromByteArray(enc_request_response) + "Size :"+ enc_request_response.Length+"\n");
+
+                                    byte [] ack_message = Encoding.Default.GetBytes("OK!");
+                                    byte[] ack_plus_response = new byte[enc_request_response.Length + 3];
+                                    
+                                    Array.Copy(ack_message,0, ack_plus_response, 0, 3);
+                                    Array.Copy(enc_request_response, 0, ack_plus_response, 3, enc_request_response.Length);
 
                                     byte[] HMAC_server = applyHMACwithSHA512(Encoding.Default.GetString(ack_plus_response),sessionKey);
+                                    logs.AppendText("HMAC that will be sent: " + generateHexStringFromByteArray(HMAC_server) + "\n Size: " + HMAC_server.Length + "\n");
 
-                                    byte[] all_response = new byte[enc_request_response.Length + 2 + HMAC_server.Length];
-                                    Array.Copy(ack_plus_response, 0, all_response, 0, enc_request_response.Length + 2);
-                                    Array.Copy(HMAC_server,0,all_response, enc_request_response.Length + 2, HMAC_server.Length);
+                                    byte[] all_response = new byte[enc_request_response.Length + 3 + HMAC_server.Length];
+                                    logs.AppendText("Response size: "+ all_response.Length+"\n");
+                                    Array.Copy(ack_plus_response, 0, all_response, 0, enc_request_response.Length + 3);
+                                    Array.Copy(HMAC_server,0,all_response, enc_request_response.Length + 3, HMAC_server.Length);
+
+                                    //byte[] response_size = Encoding.Default.GetBytes(all_response.Length.ToString());
+                                    //clientSocket.Send(response_size);
+                                    clientSocket.Send(Encoding.Default.GetBytes(2.ToString()));
 
                                     clientSocket.Send(all_response);
 
@@ -636,7 +692,17 @@ namespace client
                             }
                             else if (permission == 0)// if permission rejected
                             {
+                                byte[] neg_ack_message = Encoding.Default.GetBytes("NOO");
+                                byte[] HMAC_server = applyHMACwithSHA512("NOO", sessionKey);
+                                logs.AppendText("HMAC that will be sent to server with response: "+ generateHexStringFromByteArray(HMAC_server) +"\n");
 
+                                byte[] concat = new byte[neg_ack_message.Length + HMAC_server.Length];
+                                Array.Copy(neg_ack_message, concat, neg_ack_message.Length);
+                                Array.Copy(HMAC_server, 0, concat, neg_ack_message.Length, HMAC_server.Length);
+
+                                clientSocket.Send(Encoding.Default.GetBytes(2.ToString()));
+
+                                clientSocket.Send(concat);
                             }
                             permission = 2;//reinitializing the permission variable
                         }

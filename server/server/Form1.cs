@@ -102,7 +102,7 @@ namespace cs432_project_server
                     clientList.Add(clientName);
                     foreach (string user in clientList)
                     {
-                        logs.AppendText(user + "\n");
+                        logs.AppendText("--"+user + "\n");
                     }
 
                     try
@@ -117,7 +117,7 @@ namespace cs432_project_server
                         logs.AppendText("Current Client List:\n");
                         foreach (string user in clientList)
                         {
-                            logs.AppendText(user + "\n");
+                            logs.AppendText("--" + user + "\n");
                         }
                         thisClient.Close();
                     }
@@ -249,7 +249,7 @@ namespace cs432_project_server
                 logs.AppendText("Current Client List:\n");
                 foreach (string user in clientList)
                 {
-                    logs.AppendText(user + "\n");
+                    logs.AppendText("--" + user + "\n");
                 }
                 //thisClient.Close();
             }
@@ -273,8 +273,8 @@ namespace cs432_project_server
 
                     if (receivedInfoHeader[0] == 0) //Upload
                     {
-                        Byte[] upload_header = new Byte[1];
-                        upload_header[0] = 0;
+                        Byte[] upload_header = new Byte[6];
+                        upload_header = Encoding.Default.GetBytes("UPLOAD");
                         thisClient.Send(upload_header);
 
                         // Receive the incoming File's name and size
@@ -406,8 +406,8 @@ namespace cs432_project_server
                     else if (receivedInfoHeader[0] == 1)// request/download
                     {
                         //sends the header for the download operation
-                        Byte[] download_header = new Byte[1];
-                        download_header[0] = 1;
+                        Byte[] download_header = new Byte[6];
+                        download_header = Encoding.Default.GetBytes("DOLOAD");
                         thisClient.Send(download_header);
 
                         //receiving filename from client
@@ -474,11 +474,11 @@ namespace cs432_project_server
                                         string fileowner_sesskey = clientSessionKeys[clientIndex];
 
                                         //sends request header to fileOwnerClient
-                                        Byte[] header = new Byte[1];
-                                        header[0] = 2;
+                                        Byte[] header = new Byte[6];
+                                        header = Encoding.Default.GetBytes("REQUST");
                                         fileOwnerClient.Send(header);
 
-                                        Byte[] reqPropertiesBuffer = new Byte[128+128+pubKeyClient.Length+512];
+                                        Byte[] reqPropertiesBuffer = new Byte[128+128+pubKeyClient.Length+64];
                                         Array.Copy(Encoding.Default.GetBytes(filename_string), reqPropertiesBuffer, filename_string.Length);
                                         Array.Copy(Encoding.Default.GetBytes(username), 0, reqPropertiesBuffer, 128, username.Length);
                                         Array.Copy(Encoding.Default.GetBytes(pubKeyClient), 0, reqPropertiesBuffer, 256, pubKeyClient.Length);
@@ -490,43 +490,108 @@ namespace cs432_project_server
                                         logs.AppendText("File owner: "+ fileOwner+ "\n");
                                         logs.AppendText("Requestor: " + username + "\n");
                                         logs.AppendText("File requested: " + filename_string + "\n");
-                                        logs.AppendText("Public Key of the fileowner: " + generateHexStringFromByteArray(Encoding.Default.GetBytes(pubKeyClient))+ "\nLength: "+pubKeyClient.Length+"\n");
+                                        logs.AppendText("Public Key of the requester: " + generateHexStringFromByteArray(Encoding.Default.GetBytes(pubKeyClient))+ "\nLength: "+pubKeyClient.Length+"\n");
                                         logs.AppendText("HMAC appended to the message: " + generateHexStringFromByteArray(hmac_request) + "\n");
 
                                         // Send the filePropertiesBuffer to the Server
-                                        fileOwnerClient.Send(reqPropertiesBuffer);
+                                        fileOwnerClient.Send(reqPropertiesBuffer);                                       
+
+                                        byte[] reqResponse = new byte[579];                                                                              
+                                        fileOwnerClient.Receive(reqResponse);
+                                        reqResponse = Encoding.Default.GetBytes(Encoding.Default.GetString(reqResponse).Trim('\0'));
+                                        int length = reqResponse.Length;
+
+                                        string response = Encoding.Default.GetString(reqResponse.Take(length-64).ToArray());
+                                        string HMAC_response = Encoding.Default.GetString(reqResponse.Skip(length - 64).Take(64).ToArray());
+                                        logs.AppendText("HMAC received from the fileOwners response: " + generateHexStringFromByteArray(Encoding.Default.GetBytes(HMAC_response)) + "\n");
+
+                                        byte [] HMAC_response_generated_byte = applyHMACwithSHA512(response,Encoding.Default.GetBytes(fileowner_sesskey));
+                                        logs.AppendText("HMAC generated from the fileOwners response: " + generateHexStringFromByteArray(HMAC_response_generated_byte) + "\n");
+                                        string HMAC_response_generated = Encoding.Default.GetString(HMAC_response_generated_byte);
 
 
+                                        if (HMAC_response_generated == HMAC_response)
+                                        {
+                                            logs.AppendText("Signature of the fileowner's response has been verified!\n");
 
+                                            string response_ack = Encoding.Default.GetString(reqResponse.Take(3).ToArray());
+                                            if (response_ack == "NOO")
+                                            {
+                                                string message_string = "Permission denied by " + fileOwner + " to download the file: " + filename_string + "\nRequester: " + username + "\n";
 
+                                                message_print_and_send(message_string, thisClient);
 
+                                            }
+                                            else if (response_ack == "OK!")
+                                            {                                              
+                                                logs.AppendText("Permission granted\n");
 
+                                                byte[] enc_file = File.ReadAllBytes(textBox_database_path.Text + "/" + filename_string);
+                                                string enc_file_string = generateHexStringFromByteArray(enc_file);
+                                                //enc_file = enc_file.Substring(0, enc_file.IndexOf("\0"));
 
-                                        //sends a header for the download mode
-                                        string request_header = "REQ_HEAD";
-                                        byte[] request_header_byte = Encoding.Default.GetBytes(request_header);
-                                        fileOwnerClient.Send(request_header_byte);
+                                                logs.AppendText("File: " + filename_string + " will be sent to client: " + username + "!\n");
+                                                logs.AppendText("Hex Content: " + enc_file_string + "\n");
 
+                                                byte[] enc_file_and_items = new byte[length - (64 + 3) + enc_file.Length];
+                                                byte[] aes_parameters = reqResponse.Skip(3).Take(length - (64 + 3)).ToArray();
+                                                Array.Copy(aes_parameters, 0, enc_file_and_items, 0, aes_parameters.Length);
+                                                Array.Copy(enc_file, 0, enc_file_and_items, aes_parameters.Length, enc_file.Length);
 
+                                                byte[] HMAC_enc_file_and_items = signWithRSA(Encoding.Default.GetString(enc_file_and_items), 4096, privateKey);
+                                                logs.AppendText("HMAC of enc(aes_parameters)|encypted_file: " + generateHexStringFromByteArray(HMAC_enc_file_and_items) + "\n");
+
+                                                byte[] file_everything = new byte[enc_file_and_items.Length + HMAC_enc_file_and_items.Length];
+                                                Array.Copy(enc_file_and_items, 0, file_everything, 0, enc_file_and_items.Length);
+                                                Array.Copy(HMAC_enc_file_and_items, 0, file_everything, enc_file_and_items.Length, HMAC_enc_file_and_items.Length);
+                                                logs.AppendText("Total packet size: " + (enc_file_and_items.Length + HMAC_enc_file_and_items.Length) + "\n");
+
+                                                //Sends the mode for the download
+                                                byte[] download_mode = new byte[1];
+                                                download_mode[0] = 11;
+                                                thisClient.Send(download_mode);
+
+                                                //Sends the packet size
+                                                byte[] packet_size = Encoding.Default.GetBytes(file_everything.Length.ToString());
+                                                logs.AppendText("Size of the packet: " + file_everything.Length + "\n");
+                                                thisClient.Send(packet_size);
+
+                                                byte[] file_size = Encoding.Default.GetBytes(enc_file.Length.ToString());
+                                                logs.AppendText("Size of the packet: " + enc_file.Length + "\n");
+                                                thisClient.Send(file_size);
+
+                                                //Sends the packet
+                                                logs.AppendText("Hex content of the packet: " + generateHexStringFromByteArray(file_everything) + "\n");
+                                                thisClient.Send(file_everything);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            string message_string = "Signature of the fileOwners response is NOT verified!\n";
+
+                                            message_print_and_send(message_string,thisClient);
+                                        }                                       
                                     }
                                 }
                                 else
                                 {
-                                    logs.AppendText("File owner (" + filename_string + ") is not online at the moment, try again later to get download request!\n");
-                                    //TO DO: signed messages to inform client will be sent here
+                                    string message_string = "File owner (" + filename_string + ") is not online at the moment, try again later to get download request!\n";
+                                    message_print_and_send(message_string,thisClient);                                  
+
                                 }
 
                             }
                             else
                             {
-                                logs.AppendText("There is no such file exists: " + filename_string + "!\n");
-                                //TO DO: signed messages to inform client will be sent here
+                                string message_string = "There is no such file exists: " + filename_string + "!\n";
+                                message_print_and_send(message_string,thisClient);
+                                
                             }
                         }
                         else
                         {
-                            logs.AppendText("Signature over sended filename for download request is not verified for client " + username + "!\n");
-                            //TO DO: signed messages to inform client will be sent here
+                            string message_string = "Signature over sended filename for download request is not verified for client " + username + "!\n";
+                            message_print_and_send(message_string,thisClient);                           
                         }
 
                     }
@@ -538,12 +603,14 @@ namespace cs432_project_server
                         logs.AppendText(username + " has disconnected\n");
                         try
                         {
-                            clientList.Remove(username); //removes username if disconnected
+                            clientList.Remove(username);//removes username if disconnected
+                            int index = clientList.IndexOf(username);
+                            clientSessionKeys.Remove(clientSessionKeys[index]);
                             // current clientlist will be printed here
                             logs.AppendText("Current Client List:\n");
                             foreach (string user in clientList)
                             {
-                                logs.AppendText(user + "\n");
+                                logs.AppendText("--" + user + "\n");
                             }
                         }
                         catch (Exception e)
@@ -813,6 +880,18 @@ namespace cs432_project_server
                 textBox_port.Enabled = true;
                 button_serverStart.Enabled = true;
             }
+        }
+
+        private void message_print_and_send(string message_string, Socket thisClient)
+        {
+            byte[] message = new byte[256];
+            message = Encoding.Default.GetBytes(message_string);
+            logs.AppendText(message_string);
+
+            byte[] download_mode = new byte[1];
+            download_mode[0] = 12;
+            thisClient.Send(download_mode);
+            thisClient.Send(message);
         }
     }
 }
