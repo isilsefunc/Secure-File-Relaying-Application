@@ -311,7 +311,7 @@ namespace client
 
                             // Files will be enrypted in CBC mode using AES key and IV
                             byte[] encryptedWithAES256 = encryptWithAES256(plaintext, AESkey, IV);
-                            logs.AppendText("AES256 Encrypted file: ");
+                            //logs.AppendText("AES256 Encrypted file: ");
                             //logs.AppendText(generateHexStringFromByteArray(encryptedWithAES256) + "\n");
                             string s_encryptedWithAES256 = Encoding.Default.GetString(encryptedWithAES256);
 
@@ -349,7 +349,7 @@ namespace client
                             clientSocket.Receive(bufferAck);
                             string sAcknowledgement = Encoding.Default.GetString(bufferAck).Trim('\0');
                             logs.AppendText("Received ack is : ");
-                            logs.AppendText(generateHexStringFromByteArray(bufferAck) + "\n");
+                            logs.AppendText(generateHexStringFromByteArray(Encoding.Default.GetBytes(sAcknowledgement)) + "\n");
                             logs.AppendText(sAcknowledgement + "\n");
 
                             //Recieve signed acknowledgement 
@@ -393,6 +393,7 @@ namespace client
                                         + generateHexStringFromByteArray(encrypted_AES) + "\t" + generateHexStringFromByteArray(encrypted_IV) + "\n");
                                     bWriteLog.Write(logBuffer.ToArray());
                                     bWriteLog.Close();
+                                    logs.AppendText("New file parameters were entered to the LOGS file.\n");
                                 }
                             }
                             else
@@ -495,6 +496,7 @@ namespace client
                                         //string downlaoded_file = Encoding.Default.GetString(byte_file);
 
                                         File.WriteAllBytes(repository + "/" + filename_string, byte_file);
+                                        logs.AppendText("File was succesfully downloaded!\n");
                                         // Create the file and write into it 
                                         /*BinaryWriter bWrite = new BinaryWriter(File.Open(repository + "/" + file, FileMode.Append));
                                         bWrite.Write(downlaoded_file);
@@ -621,7 +623,9 @@ namespace client
                             upload_button.Enabled = false;
                             textBox1.Enabled = false;
 
-                            while(permission == 2) { }//busy waiting on permissons (initial value is 2)
+                            logs.AppendText("Do you give permission to " + username + " to download the  file of yours " + fileName + "?\n");
+
+                            while (permission == 2) { }//busy waiting on permissons (initial value is 2)
 
 
                             if (permission == 1)// if permission granted
@@ -775,6 +779,7 @@ namespace client
 
                         clientSocket.Connect(IP, portNum);
                         connected = true;
+                        terminating = false;
                         logs.AppendText("Connected to the server!\n");
                         button_connect.Enabled = false;
                         button_disconnect.Enabled = true;

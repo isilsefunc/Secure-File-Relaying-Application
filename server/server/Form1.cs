@@ -20,6 +20,7 @@ namespace cs432_project_server
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         List<Socket> clientSockets = new List<Socket>();
         List<string> clientList = new List<string>();
+        List<string> authenticatedList = new List<string>();
         //List<string> clientPubKeys = new List<string>();
         List<string> clientSessionKeys = new List<string>();
 
@@ -190,13 +191,11 @@ namespace cs432_project_server
                 logs.AppendText("HMAC Session Key\n");
                 logs.AppendText(generateHexStringFromByteArray(HMAC_Key) + "\n" + " HMAC Key size: " + HMAC_Key.Length + "\n");
 
-                logs.AppendText("HMAC Session Key String\n");
-                logs.AppendText(hmac_key_string + "\n" + " HMAC Key size: " + HMAC_Key.Length + "\n");
-
                 //encrypting the HMAC session key with the public key of the client
                 byte[] encrypted_session_key_byte = encryptWithRSA(hmac_key_string, 4096, pubKeyClient);
                 string encrypted_session_key_string = Encoding.Default.GetString(encrypted_session_key_byte);
-                encrypted_session_key_string = encrypted_session_key_string.Substring(0, encrypted_session_key_string.IndexOf("\0"));
+                //encrypted_session_key_string = encrypted_session_key_string.Substring(0, encrypted_session_key_string.IndexOf("\0"));
+
                 logs.AppendText("Encrypted HMAC Session Key\n");
                 logs.AppendText(generateHexStringFromByteArray(encrypted_session_key_byte) + "\n" + "Encrypted HMAC Key size: " + encrypted_session_key_byte.Length + "\n");
 
@@ -231,9 +230,13 @@ namespace cs432_project_server
 
                 if (last_message == "OKBRUH")
                 {
+                    logs.AppendText("Client session key is \n");
+                    logs.AppendText(generateHexStringFromByteArray(HMAC_Key) + "\n");
+
                     logs.AppendText("Client " + clientName + " has authanticated to the server, protocol completed!\n");
                     //Starts listening to the client
                     clientSessionKeys.Add(hmac_key_string);//adding the sesh key with the client to memory
+                    authenticatedList.Add(clientName);
                     Receive(thisClient, clientName, pubKeyClient, hmac_key_string);
                 }
                 else if (last_message == "NOBRUH")
@@ -270,9 +273,6 @@ namespace cs432_project_server
         private void Receive(Socket thisClient, string username, string pubKeyClient, string sessionKey)
         {
             bool connected = true;
-            byte[] sessionkeybytes = Encoding.Default.GetBytes(sessionKey);
-            logs.AppendText("Client session key is \n");
-            logs.AppendText(generateHexStringFromByteArray(sessionkeybytes) + "\n");
 
             while (connected && !terminating)
             {
@@ -333,7 +333,6 @@ namespace cs432_project_server
                         string enc_string = Encoding.Default.GetString(bufferEncrypted);
 
 
-                        logs.AppendText("Recieved encrypted file is: \n");
                         //logs.AppendText(generateHexStringFromByteArray(bufferEncrypted) + "\n\n");
 
 
@@ -440,7 +439,7 @@ namespace cs432_project_server
                             string fileOwner = filename_string.Split('_')[0];
                             if (File.Exists(textBox_database_path.Text + "/" + filename_string))
                             {
-                                if (clientList.Exists(x => x == fileOwner))//file owner of the client is online at the moment
+                                if (authenticatedList.Exists(x => x == fileOwner))//file owner of the client is online at the moment
                                 {
                                     if (username == fileOwner)// given file belongs to the client
                                     {
@@ -458,7 +457,8 @@ namespace cs432_project_server
 
                                         //send encrypted file
                                         //byte[] file_buffer = hexStringToByteArray(enc_file_string);
-                                        byte [] file_size = Encoding.Default.GetBytes(enc_file.Length.ToString());
+                                        byte[] file_size = new byte[64];
+                                        Array.Copy(Encoding.Default.GetBytes(enc_file.Length.ToString()), file_size, enc_file.Length.ToString().Length);
                                         logs.AppendText("File size is " + enc_file.Length + "\n");
 
                                         //send signature over encrypted file
@@ -478,10 +478,10 @@ namespace cs432_project_server
                                         //TO DO: request protocol to other client will be implemented here
                                         int clientIndex = 0;
                                         bool checker = false;
-                                        for (int i = 0; i < clientList.Count && !checker; i++)
+                                        for (int i = 0; i < authenticatedList.Count && !checker; i++)
                                         {
-                                            logs.AppendText("Client: " + clientList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
-                                            if(clientList[i] == fileOwner)
+                                            logs.AppendText("Client: " + authenticatedList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
+                                            if(authenticatedList[i] == fileOwner)
                                             {
                                                 clientIndex = i;
                                                 checker = true;
@@ -625,6 +625,7 @@ namespace cs432_project_server
                             int index = clientList.IndexOf(username);//removes sessionKey if disconnected
                             clientSessionKeys.Remove(clientSessionKeys[index]);
                             clientList.Remove(username);//removes username if disconnected
+                            authenticatedList.Remove(username);
 
                             // current clientlist will be printed here
                             logs.AppendText("Current Client List:\n");
