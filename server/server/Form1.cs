@@ -20,6 +20,7 @@ namespace cs432_project_server
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         List<Socket> clientSockets = new List<Socket>();
         List<string> clientList = new List<string>();
+        List<string> authenticatedList = new List<string>();
         //List<string> clientPubKeys = new List<string>();
         List<string> clientSessionKeys = new List<string>();
 
@@ -234,6 +235,7 @@ namespace cs432_project_server
                     logs.AppendText("Client " + clientName + " has authanticated to the server, protocol completed!\n");
                     //Starts listening to the client
                     clientSessionKeys.Add(hmac_key_string);//adding the sesh key with the client to memory
+                    authenticatedList.Add(clientName);
                     Receive(thisClient, clientName, pubKeyClient, hmac_key_string);
                 }
                 else if (last_message == "NOBRUH")
@@ -276,7 +278,6 @@ namespace cs432_project_server
 
             while (connected && !terminating)
             {
-
                 try
                 {
                     // Receive the operation information
@@ -440,7 +441,7 @@ namespace cs432_project_server
                             string fileOwner = filename_string.Split('_')[0];
                             if (File.Exists(textBox_database_path.Text + "/" + filename_string))
                             {
-                                if (clientList.Exists(x => x == fileOwner))//file owner of the client is online at the moment
+                                if (clientList.Contains(fileOwner))//file owner of the client is online at the moment
                                 {
                                     if (username == fileOwner)// given file belongs to the client
                                     {
@@ -450,37 +451,38 @@ namespace cs432_project_server
                                         //enc_file = reader.ReadString();
                                         //reader.Close();
                                         byte[] enc_file = File.ReadAllBytes(textBox_database_path.Text + "/" + filename_string);
-                                        string enc_file_string = generateHexStringFromByteArray(enc_file);
+                                        //string enc_file_string = generateHexStringFromByteArray(enc_file);
                                         //enc_file = enc_file.Substring(0, enc_file.IndexOf("\0"));
 
                                         logs.AppendText("File: " + filename_string + " will be sent to client: "+ username + "!\n");
                                         //logs.AppendText("Hex Content: "+ enc_file_string + "\n");
 
-                                        Byte[] download_mode = new Byte[1];
-                                        download_mode[0] = 10;
-                                        thisClient.Send(download_mode);
-
                                         //send encrypted file
                                         //byte[] file_buffer = hexStringToByteArray(enc_file_string);
                                         byte [] file_size = Encoding.Default.GetBytes(enc_file.Length.ToString());
                                         logs.AppendText("File size is " + enc_file.Length + "\n");
-                                        thisClient.Send(file_size);
-                                        thisClient.Send(enc_file);
 
                                         //send signature over encrypted file
-                                        byte[] sig_enc_file = signWithRSA(enc_file_string, 4096, privateKey);
+                                        byte[] sig_enc_file = signWithRSA(Encoding.Default.GetString(enc_file), 4096, privateKey);
+
+                                        Byte[] download_mode = new Byte[1];
+                                        download_mode[0] = 10;
+                                        thisClient.Send(download_mode);
+
+                                        thisClient.Send(file_size);
+                                        thisClient.Send(enc_file);
                                         thisClient.Send(sig_enc_file);
-                                        logs.AppendText("Signature of the encrypted file has sent: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
+                                        //logs.AppendText("Signature of the encrypted file has sent: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
                                     }
                                     else//file will be requested from other client
                                     {
                                         //TO DO: request protocol to other client will be implemented here
                                         int clientIndex = 0;
                                         bool checker = false;
-                                        for (int i = 0; i < clientList.Count && !checker; i++)
+                                        for (int i = 0; i < authenticatedList.Count && !checker; i++)
                                         {
-                                            logs.AppendText("Client: " + clientList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
-                                            if(clientList[i] == fileOwner)
+                                            logs.AppendText("Client: " + authenticatedList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
+                                            if(authenticatedList[i] == fileOwner)
                                             {
                                                 clientIndex = i;
                                                 checker = true;
@@ -544,11 +546,11 @@ namespace cs432_project_server
                                                 logs.AppendText("Permission granted\n");
 
                                                 byte[] enc_file = File.ReadAllBytes(textBox_database_path.Text + "/" + filename_string);
-                                                string enc_file_string = generateHexStringFromByteArray(enc_file);
+                                                //string enc_file_string = generateHexStringFromByteArray(enc_file);
                                                 //enc_file = enc_file.Substring(0, enc_file.IndexOf("\0"));
 
                                                 logs.AppendText("File: " + filename_string + " will be sent to client: " + username + "!\n");
-                                                logs.AppendText("Hex Content: " + enc_file_string + "\n");
+                                                //logs.AppendText("Hex Content: " + enc_file_string + "\n");
 
                                                 byte[] enc_file_and_items = new byte[length - (64 + 3) + enc_file.Length];
                                                 byte[] aes_parameters = reqResponse.Skip(3).Take(length - (64 + 3)).ToArray();
@@ -556,7 +558,7 @@ namespace cs432_project_server
                                                 Array.Copy(enc_file, 0, enc_file_and_items, aes_parameters.Length, enc_file.Length);
 
                                                 byte[] HMAC_enc_file_and_items = signWithRSA(Encoding.Default.GetString(enc_file_and_items), 4096, privateKey);
-                                                logs.AppendText("HMAC of enc(aes_parameters)|encypted_file: " + generateHexStringFromByteArray(HMAC_enc_file_and_items) + "\n");
+                                                //logs.AppendText("HMAC of enc(aes_parameters) | encypted_file: " + generateHexStringFromByteArray(HMAC_enc_file_and_items) + "\n");
 
                                                 byte[] file_everything = new byte[enc_file_and_items.Length + HMAC_enc_file_and_items.Length];
                                                 Array.Copy(enc_file_and_items, 0, file_everything, 0, enc_file_and_items.Length);
@@ -578,7 +580,7 @@ namespace cs432_project_server
                                                 thisClient.Send(file_size);
 
                                                 //Sends the packet
-                                                logs.AppendText("Hex content of the packet: " + generateHexStringFromByteArray(file_everything) + "\n");
+                                                //logs.AppendText("Hex content of the packet: " + generateHexStringFromByteArray(file_everything) + "\n");
                                                 thisClient.Send(file_everything);
                                             }
                                         }
@@ -624,6 +626,7 @@ namespace cs432_project_server
                             int index = clientList.IndexOf(username);//removes sessionKey if disconnected
                             clientSessionKeys.Remove(clientSessionKeys[index]);
                             clientList.Remove(username);//removes username if disconnected
+                            authenticatedList.Remove(username);
 
                             // current clientlist will be printed here
                             logs.AppendText("Current Client List:\n");
@@ -634,13 +637,13 @@ namespace cs432_project_server
                         }
                         catch (Exception e)
                         {
-                            // do nothing if already removed & came here accidentally 
+                            logs.AppendText("A problem occurred when removing client after error\n");
                         }
                     }
+                    connected = false;
                     thisClient.Close();
                     clientSockets.Remove(thisClient);
                     logs.AppendText("ClientSockets size: " + clientSockets.Count() + "\n");
-                    connected = false;
                 }
             }
         }

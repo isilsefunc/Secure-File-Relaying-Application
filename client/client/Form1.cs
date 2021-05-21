@@ -354,9 +354,10 @@ namespace client
 
                             //Recieve signed acknowledgement 
                             Byte[] bufferAckSigned = new Byte[512];
+                            string bufferAckSigned_string = Encoding.Default.GetString(bufferAckSigned).Trim('\0');
                             clientSocket.Receive(bufferAckSigned);
                             logs.AppendText("Recieved signed ack is : ");
-                            logs.AppendText(generateHexStringFromByteArray(bufferAckSigned) + "\n");
+                            logs.AppendText(generateHexStringFromByteArray(Encoding.Default.GetBytes(bufferAckSigned_string)) + "\n");
 
 
 
@@ -432,25 +433,27 @@ namespace client
                                 //Receiving encrypted file
                                 byte[] file_size_byte = new byte[64];
                                 clientSocket.Receive(file_size_byte);
+
                                 int fileSize = Int32.Parse(Encoding.Default.GetString(file_size_byte).Trim('\0'));
                                 logs.AppendText("File size received is "+ fileSize +"\n");
+
                                 byte[] file_byte = new byte[fileSize];
                                 clientSocket.Receive(file_byte);
 
                                 string ciphertext = Encoding.Default.GetString(file_byte).Trim('\0');                           
 
-                                byte[] ciphertext_byte = Encoding.Default.GetBytes(ciphertext);
-                                string enc_file = generateHexStringFromByteArray(ciphertext_byte);
+                                //byte[] ciphertext_byte = Encoding.Default.GetBytes(ciphertext);
+                                //string enc_file = generateHexStringFromByteArray(ciphertext_byte);
 
                                 logs.AppendText("Encrypted file has been downloaded:\n");
-                                logs.AppendText("Hex content: " + enc_file + "\n");
+                                //logs.AppendText("Hex content: " + enc_file + "\n");
 
-                                //Receiving signature over  encrypted file
+                                //Receiving signature over encrypted file
                                 byte[] sig_enc_file = new byte[512];
                                 clientSocket.Receive(sig_enc_file);
-                                logs.AppendText("Signature of the received encrypted file: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
+                                //logs.AppendText("Signature of the received encrypted file: " + generateHexStringFromByteArray(sig_enc_file) + "\n");
 
-                                if (verifyWithRSA(enc_file, 4096, serverPubKey, sig_enc_file))
+                                if (verifyWithRSA(ciphertext, 4096, serverPubKey, sig_enc_file))
                                 {
                                     logs.AppendText("Signature of the server's response to download has been verified!\n");
 
@@ -523,10 +526,10 @@ namespace client
 
                                 byte[] packet = new byte[packet_size];
                                 clientSocket.Receive(packet);
-                                logs.AppendText("Hex-string of the entire packet: " + generateHexStringFromByteArray(packet) + "\n");
+                                //logs.AppendText("Hex-string of the entire packet: " + generateHexStringFromByteArray(packet) + "\n");
                                 
                                 byte[] packet_contents = packet.Take(packet.Length - 512).ToArray();
-                                logs.AppendText("Hex-string of the encrypted packet content: " + generateHexStringFromByteArray(packet_contents) + "\n");
+                                //logs.AppendText("Hex-string of the encrypted packet content: " + generateHexStringFromByteArray(packet_contents) + "\n");
 
                                 byte[] packet_contents_signature = packet.Skip(packet.Length - 512).Take(512).ToArray();
                                 logs.AppendText("Hex-string of the signature: " + generateHexStringFromByteArray(packet_contents_signature) + "\n");
@@ -570,7 +573,7 @@ namespace client
                             }
                             else
                             {
-                                logs.AppendText("You received a erroneous download mode header!\n"); 
+                                logs.AppendText("You received an erroneous download mode header!\n"); 
                             }
                         }
                         catch
@@ -612,7 +615,7 @@ namespace client
                         if(hmac_request_string == hmac_request_generated_string)
                         {
                             logs.AppendText("HMAC of the Download request relay message from server has been verified!\n");
-
+                            logs.AppendText("Do you give permission to "+ username + " to download the  file of yours " + fileName + "?\n");
                             button_yes.Enabled = true;
                             button_no.Enabled = true;
                             download_button.Enabled = false;
@@ -773,6 +776,7 @@ namespace client
 
                         clientSocket.Connect(IP, portNum);
                         connected = true;
+                        terminating = false;
                         logs.AppendText("Connected to the server!\n");
                         button_connect.Enabled = false;
                         button_disconnect.Enabled = true;
@@ -1058,14 +1062,18 @@ namespace client
                 // Select the file
                 dialog = new OpenFileDialog();
                 dialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*"; // Taken directly from docs
-
                 // If the file is selected
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     // Send the 1 byte to inform the server that the client is sending a file
                     Byte[] infoHeader = new Byte[1];
                     infoHeader[0] = 0;
+                    logs.AppendText("Connection: " + connected + " terminating: " + terminating + "\n");
                     clientSocket.Send(infoHeader);
+                }
+                else
+                {
+                    logs.AppendText("Failed to select a file\n");
                 }
             }
             catch (Exception ex)
