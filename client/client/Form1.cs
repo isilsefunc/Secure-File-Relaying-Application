@@ -354,10 +354,9 @@ namespace client
 
                             //Recieve signed acknowledgement 
                             Byte[] bufferAckSigned = new Byte[512];
-                            string bufferAckSigned_string = Encoding.Default.GetString(bufferAckSigned).Trim('\0');
                             clientSocket.Receive(bufferAckSigned);
                             logs.AppendText("Recieved signed ack is : ");
-                            logs.AppendText(generateHexStringFromByteArray(Encoding.Default.GetBytes(bufferAckSigned_string)) + "\n");
+                            logs.AppendText(generateHexStringFromByteArray(bufferAckSigned) + "\n");
 
 
 
@@ -573,7 +572,7 @@ namespace client
                             }
                             else
                             {
-                                logs.AppendText("You received an erroneous download mode header!\n"); 
+                                logs.AppendText("You received a erroneous download mode header!\n"); 
                             }
                         }
                         catch
@@ -615,7 +614,7 @@ namespace client
                         if(hmac_request_string == hmac_request_generated_string)
                         {
                             logs.AppendText("HMAC of the Download request relay message from server has been verified!\n");
-                            logs.AppendText("Do you give permission to "+ username + " to download the  file of yours " + fileName + "?\n");
+
                             button_yes.Enabled = true;
                             button_no.Enabled = true;
                             download_button.Enabled = false;
@@ -776,7 +775,6 @@ namespace client
 
                         clientSocket.Connect(IP, portNum);
                         connected = true;
-                        terminating = false;
                         logs.AppendText("Connected to the server!\n");
                         button_connect.Enabled = false;
                         button_disconnect.Enabled = true;
@@ -1062,18 +1060,14 @@ namespace client
                 // Select the file
                 dialog = new OpenFileDialog();
                 dialog.Filter = "txt files (*.txt)|*.txt|All files (*.*)|*.*"; // Taken directly from docs
+
                 // If the file is selected
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     // Send the 1 byte to inform the server that the client is sending a file
                     Byte[] infoHeader = new Byte[1];
                     infoHeader[0] = 0;
-                    logs.AppendText("Connection: " + connected + " terminating: " + terminating + "\n");
                     clientSocket.Send(infoHeader);
-                }
-                else
-                {
-                    logs.AppendText("Failed to select a file\n");
                 }
             }
             catch (Exception ex)

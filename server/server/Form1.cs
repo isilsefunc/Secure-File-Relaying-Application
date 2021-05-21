@@ -20,7 +20,6 @@ namespace cs432_project_server
         Socket serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         List<Socket> clientSockets = new List<Socket>();
         List<string> clientList = new List<string>();
-        List<string> authenticatedList = new List<string>();
         //List<string> clientPubKeys = new List<string>();
         List<string> clientSessionKeys = new List<string>();
 
@@ -235,7 +234,6 @@ namespace cs432_project_server
                     logs.AppendText("Client " + clientName + " has authanticated to the server, protocol completed!\n");
                     //Starts listening to the client
                     clientSessionKeys.Add(hmac_key_string);//adding the sesh key with the client to memory
-                    authenticatedList.Add(clientName);
                     Receive(thisClient, clientName, pubKeyClient, hmac_key_string);
                 }
                 else if (last_message == "NOBRUH")
@@ -278,6 +276,7 @@ namespace cs432_project_server
 
             while (connected && !terminating)
             {
+
                 try
                 {
                     // Receive the operation information
@@ -441,7 +440,7 @@ namespace cs432_project_server
                             string fileOwner = filename_string.Split('_')[0];
                             if (File.Exists(textBox_database_path.Text + "/" + filename_string))
                             {
-                                if (clientList.Contains(fileOwner))//file owner of the client is online at the moment
+                                if (clientList.Exists(x => x == fileOwner))//file owner of the client is online at the moment
                                 {
                                     if (username == fileOwner)// given file belongs to the client
                                     {
@@ -479,10 +478,10 @@ namespace cs432_project_server
                                         //TO DO: request protocol to other client will be implemented here
                                         int clientIndex = 0;
                                         bool checker = false;
-                                        for (int i = 0; i < authenticatedList.Count && !checker; i++)
+                                        for (int i = 0; i < clientList.Count && !checker; i++)
                                         {
-                                            logs.AppendText("Client: " + authenticatedList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
-                                            if(authenticatedList[i] == fileOwner)
+                                            logs.AppendText("Client: " + clientList[i] + " Session key: "+ generateHexStringFromByteArray(Encoding.Default.GetBytes(clientSessionKeys[i])) + "\n");
+                                            if(clientList[i] == fileOwner)
                                             {
                                                 clientIndex = i;
                                                 checker = true;
@@ -626,7 +625,6 @@ namespace cs432_project_server
                             int index = clientList.IndexOf(username);//removes sessionKey if disconnected
                             clientSessionKeys.Remove(clientSessionKeys[index]);
                             clientList.Remove(username);//removes username if disconnected
-                            authenticatedList.Remove(username);
 
                             // current clientlist will be printed here
                             logs.AppendText("Current Client List:\n");
@@ -637,13 +635,13 @@ namespace cs432_project_server
                         }
                         catch (Exception e)
                         {
-                            logs.AppendText("A problem occurred when removing client after error\n");
+                            // do nothing if already removed & came here accidentally 
                         }
                     }
-                    connected = false;
                     thisClient.Close();
                     clientSockets.Remove(thisClient);
                     logs.AppendText("ClientSockets size: " + clientSockets.Count() + "\n");
+                    connected = false;
                 }
             }
         }

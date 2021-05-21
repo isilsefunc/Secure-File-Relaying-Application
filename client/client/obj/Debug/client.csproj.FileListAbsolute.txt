@@ -108,12 +108,3 @@ C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\cli
 C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.Form1.resources
 C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.Properties.Resources.resources
 C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.csproj.GenerateResource.Cache
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\bin\Debug\client.exe.config
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\obj\Debug\client.exe
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\obj\Debug\client.pdb
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\bin\Debug\client.exe
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\bin\Debug\client.pdb
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\obj\Debug\client.Form1.resources
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\obj\Debug\client.Properties.Resources.resources
-C:\Users\Ömer Ekiz\Downloads\bendeki_problemli_versiyon\client\client\obj\Debug\client.csproj.GenerateResource.Cache
