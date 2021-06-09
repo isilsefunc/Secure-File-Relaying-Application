@@ -61,3 +61,59 @@ C:\Users\Ömer Ekiz\Downloads\cs432_project (1)\cs432_project\client\client\obj\
 \\Mac\Home\Desktop\cs432_Project\cs432_project\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
 \\Mac\Home\Desktop\cs432_Project\cs432_project\client\client\obj\Debug\client.exe
 \\Mac\Home\Desktop\cs432_Project\cs432_project\client\client\obj\Debug\client.pdb
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\bin\Debug\client.exe.config
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\bin\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\bin\Debug\client.pdb
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.csprojAssemblyReference.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.Form1.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.csproj.GenerateResource.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\bin\Debug\client.exe
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\bin\Debug\client.pdb
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.Form1.resources
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Ömer Ekiz\Documents\Ders Notları\3.2\CS 432\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.csproj.GenerateResource.Cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\bin\Debug\client.exe.config
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\bin\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\bin\Debug\client.pdb
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.csprojAssemblyReference.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.Form1.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.csproj.GenerateResource.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.csproj.CoreCompileInputs.cache
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.exe
+C:\Users\Batuhan Demir\Desktop\repos\CS432-project-main\CS432-project-main\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\bin\Debug\client.exe
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\bin\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\obj\Debug\client.Form1.resources
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Ömer Ekiz\Downloads\request_lastStep_remaining\client\client\obj\Debug\client.csproj.GenerateResource.Cache
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\bin\Debug\client.exe
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\bin\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.Form1.resources
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Ömer Ekiz\Downloads\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.csproj.GenerateResource.Cache
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\bin\Debug\client.exe.config
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.exe
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\bin\Debug\client.exe
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\bin\Debug\client.pdb
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.csprojResolveAssemblyReference.cache
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.Form1.resources
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.Properties.Resources.resources
+C:\Users\Ömer Ekiz\Downloads\cs432_project_kapital\CS432-project-main_2\CS432-project-main\client\client\obj\Debug\client.csproj.GenerateResource.Cache
